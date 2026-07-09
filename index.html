@@ -732,10 +732,32 @@
                 const url = subData[k] || '';
                 const el = document.createElement('div');
                 el.className = 'sub-card';
-                el.innerHTML = '<div class="sub-icon">' + SUBS[k].emoji + '</div><div class="sub-body"><div class="name">' + SUBS[k].name + '</div><div class="info">' + SUBS[k].desc + '</div></div>';
+                el.innerHTML = '<div class="sub-icon">' + SUBS[k].emoji + '</div><div class="sub-body"><div class="name">' + SUBS[k].name + '</div><div class="info">' + (url ? '\u2705 Ready' : 'Get from bot') + '</div></div>';
                 el.onclick = () => showSubDetail(k, url);
                 c.appendChild(el);
             });
+            // Individual sub-protocols (if URLs passed by bot)
+            const protoSubs = ['vless','vmess','trojan','ss','hysteria2'];
+            const hasAny = protoSubs.some(p => subData[p]);
+            if (hasAny) {
+                const pdiv = document.createElement('div');
+                pdiv.style.cssText = 'margin-top:8px;';
+                pdiv.innerHTML = '<div class="section-title">Protocol subscriptions</div>';
+                const grid = document.createElement('div');
+                grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
+                protoSubs.forEach(id => {
+                    const url = subData[id] || '';
+                    if (!url) return;
+                    const names = { vless:'VLESS', vmess:'VMess', trojan:'Trojan', ss:'ShadowSocks', hysteria2:'Hysteria2' };
+                    const tile = document.createElement('div');
+                    tile.className = 'proto-tile';
+                    tile.innerHTML = '<div class="name">' + (names[id]||id) + '</div><div class="desc">Tap to copy</div>';
+                    tile.onclick = () => copyText(url);
+                    grid.appendChild(tile);
+                });
+                pdiv.appendChild(grid);
+                c.appendChild(pdiv);
+            }
         }
         function renderDirProtos() {
             const c = document.getElementById('dirProtoList');
@@ -755,9 +777,10 @@
             if (url) {
                 body = '<p>Status: Active</p><p style="word-break:break-all;background:#111;padding:8px;border-radius:6px;font-size:10px;font-family:monospace;margin:8px 0;">' + url + '</p>' +
                     '<button class="close-btn" onclick="copyText(\'' + url + '\')">Copy link</button>' +
-                    '<button class="close-btn" style="margin-top:4px;" onclick="tg.openTelegramLink(\'' + url + '\')">Open in HApp</button>';
+                    '<button class="close-btn" style="margin-top:4px;" onclick="tg.openLink(\'' + url + '\')">Open in browser</button>' +
+                    '<p style="font-size:10px;color:var(--text2);margin-top:8px;">Paste this link in HApp / v2rayNG / Hiddify as subscription</p>';
             } else {
-                body = '<p>Get subscription from bot @AkitaUS</p>';
+                body = '<p>No subscription yet.<br>Buy from bot @AkitaUS</p>';
             }
             openModal(s.name + ' Subscription', body);
         }
@@ -780,6 +803,8 @@
                 openModal(p.name, html);
             }
         }
+        const BASE_URL = 'https://raw.githubusercontent.com/AkitaFI/anix-vpn-miniapp/main/configs/';
+
         function showServerDetail(id, idx) {
             const p = DIR_PROTOCOLS[id];
             const s = p.servers[idx];
@@ -791,7 +816,11 @@
             if (s.secret) html += '<div class="key">Secret: ' + s.secret + '</div>';
             if (s.tcp) html += '<div class="key">TCP: ' + s.tcp + '</div>';
             if (s.udp) html += '<div class="key">UDP: ' + s.udp + '</div>';
-            if (s.file) html += '<div class="key">Config: ' + s.file + '</div>';
+            if (s.file) {
+                const fileUrl = BASE_URL + s.file;
+                html += '<div class="key">Config: ' + s.file + '</div>';
+                html += '<button class="close-btn" onclick="window.open(\'' + fileUrl + '\', \'_blank\')">Download ' + s.file + '</button>';
+            }
             if (s.note) html += '<div class="key" style="color:var(--text2);margin-top:4px;">' + s.note + '</div>';
             html += '</div>';
             if (s.host) {
