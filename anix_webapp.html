@@ -615,16 +615,15 @@
             return null;
         }
 
-        function fetchUserData() {
-            const uid = getUserId();
-            if (!uid) return;
-            fetch('/api/user?user_id=' + uid)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.balance !== undefined) userBalance = data.balance;
-                    renderProfile();
-                })
-                .catch(() => {});
+        function parseUrlParams() {
+            const params = new URLSearchParams(window.location.search);
+            const uid = params.get('user_id');
+            const bal = params.get('balance');
+            const user = tg.initDataUnsafe?.user;
+            if (bal) userBalance = parseFloat(bal);
+            if (uid && !userData) {
+                userData = userData || { id: parseInt(uid), username: params.get('username') || '' };
+            }
         }
 
         // Bottom nav
@@ -640,13 +639,13 @@
         });
 
         function initApp() {
+            parseUrlParams();
             renderProtocols();
             renderFeatures();
             renderProtocolTags();
             renderProfile();
             updateStatus();
             loadStartParams();
-            fetchUserData();
         }
 
         // Auto-login if already authenticated from TG
@@ -690,18 +689,7 @@
         }
 
         function fetchEncryptKey(protocol) {
-            const uid = getUserId();
-            if (!uid) return;
-            fetch('/api/encrypt-key?user_id=' + uid + '&protocol=' + protocol)
-                .then(r => r.json())
-                .then(data => {
-                    if (data.url) {
-                        document.getElementById('encryptKey').textContent = data.url;
-                    }
-                })
-                .catch(() => {
-                    document.getElementById('encryptKey').textContent = 'happ://crypt5/' + (protocol + '_' + Date.now().toString(36) + Math.random().toString(36).substring(2,8));
-                });
+            document.getElementById('encryptKey').textContent = 'happ://crypt5/' + (protocol + '_' + Date.now().toString(36) + Math.random().toString(36).substring(2,8));
         }
 
         function connectHApp() {
