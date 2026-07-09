@@ -27,7 +27,7 @@
             color: var(--text);
             min-height: 100vh;
             overflow-x: hidden;
-            padding-bottom: 80px;
+            padding-bottom: 90px;
         }
         ::-webkit-scrollbar { width: 2px; }
         ::-webkit-scrollbar-track { background: var(--bg); }
@@ -76,45 +76,55 @@
         .page { display: none; }
         .page.active { display: block; animation: revealUp 0.35s ease; }
 
-        /* ====== BOTTOM TAB BAR (как в Telegram) ====== */
+        /* ====== BOTTOM TAB BAR (iOS-style) ====== */
         .bottom-nav {
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
+            bottom: 12px;
+            left: 12px;
+            right: 12px;
             z-index: 200;
-            background: var(--card);
-            border-top: 1px solid var(--border);
+            background: rgba(28,28,30,0.92);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 28px;
             display: flex;
-            padding: 6px 0 env(safe-area-inset-bottom, 6px) 0;
+            padding: 4px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         }
         .bottom-nav .nav-item {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 2px;
-            padding: 6px 0;
+            justify-content: center;
+            gap: 1px;
+            padding: 8px 0;
             border: none;
             background: transparent;
-            color: var(--text2);
+            color: #636366;
             cursor: pointer;
-            transition: color 0.15s;
+            transition: all 0.2s cubic-bezier(0.25,0.46,0.45,0.94);
             -webkit-tap-highlight-color: transparent;
+            position: relative;
+            border-radius: 22px;
         }
         .bottom-nav .nav-item .icon {
-            font-size: 22px;
+            font-size: 20px;
             line-height: 1;
-            filter: grayscale(1);
-            opacity: 0.6;
-            transition: all 0.15s;
+            filter: grayscale(0.6);
+            opacity: 0.7;
+            transition: all 0.2s;
         }
         .bottom-nav .nav-item .label {
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 500;
+            letter-spacing: -0.2px;
+            margin-top: 1px;
         }
         .bottom-nav .nav-item.active {
-            color: var(--text);
+            background: rgba(255,255,255,0.08);
+            color: #ffffff;
         }
         .bottom-nav .nav-item.active .icon {
             filter: grayscale(0);
@@ -453,41 +463,18 @@
                 <div id="profileContent" style="display:none;"></div>
             </div>
 
-            <!-- Protocols Page -->
-            <div class="page" id="page-protocols">
-                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Subscriptions</p>
-                <div id="subsList"></div>
-                <p style="font-size:11px;color:var(--text2);margin:12px 0 8px;">Direct protocols</p>
-                <div id="dirProtoList"></div>
+            <!-- Home Page (VPN + Proxies + TOR) -->
+            <div class="page" id="page-home">
+                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">VPN Protocols</p>
+                <div id="homeProtocols"></div>
+                <p style="font-size:11px;color:var(--text2);margin:14px 0 8px;">Proxies</p>
+                <div id="homeProxies"></div>
+                <p style="font-size:11px;color:var(--text2);margin:14px 0 8px;">Tor Bridges</p>
+                <div id="homeTor"></div>
             </div>
 
-            <!-- Proxies Page -->
-            <div class="page" id="page-proxies">
-                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Available proxies</p>
-                <div id="proxiesList"></div>
-            </div>
-
-            <!-- TOR Page -->
-            <div class="page" id="page-tor">
-                <div class="terminal-window" style="margin-bottom:8px;">
-                    <div class="terminal-top">
-                        <span class="terminal-dot red"></span>
-                        <span class="terminal-dot yellow"></span>
-                        <span class="terminal-dot green"></span>
-                        <span style="margin-left:6px;">tor bridges</span>
-                    </div>
-                    <div class="terminal-body">
-                        <div><span class="val">Tor bridges provide access</span></div>
-                        <div><span class="val">to the Tor network through</span></div>
-                        <div><span class="val">censorship-resistant entry</span></div>
-                        <div><span class="val">nodes. Tap a bridge to copy.</span></div>
-                    </div>
-                </div>
-                <div id="torList"></div>
-            </div>
-
-            <!-- Admin Page -->
-            <div class="page" id="page-admin">
+            <!-- Admin Page (hidden unless admin) -->
+            <div class="page" id="page-admin" style="display:none;">
                 <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Admin Panel</p>
                 <div id="adminDashboard"></div>
             </div>
@@ -511,7 +498,6 @@
                         <div style="color:#555;margin-top:6px;">$ ready, no logs</div>
                     </div>
                 </div>
-
                 <div class="about-card">
                     <div class="a-label">Creator</div>
                     <div class="a-value" style="display:flex;align-items:center;gap:8px;">
@@ -519,55 +505,38 @@
                         @AkitaUS
                     </div>
                 </div>
-
                 <div class="about-card">
                     <div class="a-label">Channel</div>
                     <div class="a-value"><a href="https://t.me/AnixSecVPN" style="color:var(--text);text-decoration:none;">@AnixSecVPN</a></div>
                 </div>
-
                 <div class="about-card">
                     <div class="a-label">Why Anix VPN?</div>
                     <div id="featureComparison"></div>
                 </div>
-
-                <div class="about-card">
-                    <div class="a-label">Protocols</div>
-                    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;" id="protocolTags"></div>
-                </div>
-
                 <div class="about-card">
                     <div class="a-label">Links</div>
                     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;">
                         <a href="https://github.com/YufusPE/CIDR-internet" class="link-btn">GitHub</a>
                         <a href="https://AnixSec.pages.dev" class="link-btn">Web</a>
                         <a href="https://t.me/AnixSecVPN" class="link-btn">Channel</a>
-                        <a href="https://t.me/AkitaUS" class="link-btn">Admin</a>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Bottom Nav -->
+        <!-- Bottom Nav iOS-style -->
         <div class="bottom-nav">
-            <button class="nav-item active" data-page="profile">
+            <button class="nav-item" data-page="profile">
                 <span class="icon">&#x1F464;</span>
                 <span class="label">Profile</span>
             </button>
-            <button class="nav-item" data-page="protocols">
-                <span class="icon">&#x1F517;</span>
-                <span class="label">Protocols</span>
-            </button>
-            <button class="nav-item" data-page="proxies">
-                <span class="icon">&#x1F310;</span>
-                <span class="label">Proxies</span>
-            </button>
-            <button class="nav-item" data-page="tor">
-                <span class="icon">&#x1F5A5;</span>
-                <span class="label">TOR</span>
+            <button class="nav-item active" data-page="home">
+                <span class="icon" style="font-size:22px;">&#x1F3E0;</span>
+                <span class="label">Home</span>
             </button>
             <button class="nav-item" data-page="about">
-                <span class="icon">&#x2139;&#xFE0F;</span>
-                <span class="label">About</span>
+                <span class="icon">&#x2699;&#xFE0F;</span>
+                <span class="label">Settings</span>
             </button>
         </div>
         <!-- Admin nav item injected by JS if admin -->
@@ -584,84 +553,69 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+        tg.expand(); tg.ready();
 
-        let userData = null;
-        let userBalance = 0;
-        let subData = {};
-        let selProto = null;
-
-        const SUBS = {
-            mini: { name: 'Mini', emoji: '\uD83D\uDCF1', desc: 'All protocols' },
-            full: { name: 'Full', emoji: '\uD83D\uDE80', desc: 'VLESS, 100+ servers' },
-        };
-        const SUB_PROTOCOLS = ['vless','vmess','trojan','ss','hysteria2'];
-        const DIR_PROTOCOLS = {
-            sstp: {
-                name: 'SSTP', emoji: '\uD83D\uDD10',
-                servers: [
-                    { country: '\uD83C\uDDF7\uD83C\uDDFA Russia', host: 'vpn250254447.opengw.net:1362', user: 'vpn', pass: 'vpn' },
-                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', host: '85.23.9.73:995', user: 'vpn', pass: 'vpn' },
-                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', host: '159.26.99.230:1880', user: 'vpn', pass: 'vpn' },
-                ]
-            },
-            openvpn: {
-                name: 'OpenVPN', emoji: '\uD83D\uDD11',
-                servers: [
-                    { country: '\uD83C\uDDF7\uD83C\uDDFA Russia', file: 'Russia.ovpn', note: '.ovpn file from bot' },
-                    { country: '\uD83C\uDDEF\uD83C\uDDF5 Japan', file: 'Japan.ovpn', note: 'Contact @AkitaUS' },
-                ]
-            },
-            l2tp: {
-                name: 'L2TP/IPsec', emoji: '\uD83D\uDD12',
-                info: { server: 'public-vpn-0.opengw.net', user: 'vpn', pass: 'vpn', secret: 'vpn' }
-            },
-            ssl: {
-                name: 'SSL VPN', emoji: '\uD83D\uDD0F',
-                servers: [
-                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', host: '85.23.9.73', tcp: '995', udp: '995', user: 'vpn', pass: 'vpn' },
-                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', host: '159.26.99.230', tcp: '1880', udp: 'N/A', user: 'vpn', pass: 'vpn' },
-                ]
-            },
-            splitnet: {
-                name: 'SplitNet', emoji: '\uD83C\uDF10',
-                servers: [
-                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', user: 'vpn', pass: 'vpn', secret: 'vpn' },
-                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', user: 'vpn', pass: 'vpn', secret: 'vpn' },
-                ]
-            },
-            awg: {
-                name: 'AmneziaWG', emoji: '\uD83D\uDEE1\uFE0F',
-                servers: [
-                    { country: '\uD83D\uDDF0\uFE0F StarLink', file: 'StarLink.conf', note: '.conf from bot' },
-                    { country: '\uD83C\uDDFA\uD83C\uDDF8 USA', file: 'USA.conf', note: '.conf from bot' },
-                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', file: 'Finland.conf', note: '.conf from bot' },
-                    { country: '\uD83C\uDDF8\uD83C\uDDEA Sweden', file: 'Sweden.conf', note: '.conf from bot' },
-                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', file: 'Switzerland.conf', note: '.conf from bot' },
-                    { country: '\uD83C\uDF0D Antarctica', file: 'Antarctica.conf', note: '.conf from bot' },
-                ]
-            },
-            wireguard: {
-                name: 'WireGuard', emoji: '\uD83D\uDD35',
-                info: { note: '.conf from bot via @AkitaUS' }
-            },
-        };
-        const PROXIES = {
-            tg: { name: 'TG Proxy', emoji: '\uD83D\uDCF1', desc: 'MTProto proxy for Telegram' },
-            white: { name: 'White Proxy', emoji: '\uD83D\uDEE1\uFE0F', desc: 'Bypass whitelist blocks' },
-            socks5: { name: 'Socks5', emoji: '\uD83E\uDDE6', desc: 'SOCKS5 proxy' },
-            dns: { name: 'DNS Proxy', emoji: '\uD83C\uDF10', desc: 'DNS over HTTPS' },
-        };
+        let userData = null, userBalance = 0, subData = {};
         const ADMIN_ID = 8184235109;
+        const BASE = 'https://raw.githubusercontent.com/AkitaFI/anix-vpn-miniapp/main/configs/';
+        const ALL_PROTO = [
+            { id:'mini', name:'Mini', emoji:'\uD83D\uDCF1', sub:true },
+            { id:'full', name:'Full', emoji:'\uD83D\uDE80', sub:true },
+            { id:'vless', name:'VLESS', emoji:'\uD83D\uDD17', sub:true },
+            { id:'vmess', name:'VMess', emoji:'\uD83D\uDD17', sub:true },
+            { id:'trojan', name:'Trojan', emoji:'\uD83D\uDEE1\uFE0F', sub:true },
+            { id:'ss', name:'ShadowSocks', emoji:'\uD83D\uDD12', sub:true },
+            { id:'hysteria2', name:'Hysteria2', emoji:'\u26A1', sub:true },
+            { id:'sstp', name:'SSTP', emoji:'\uD83D\uDD10', sub:false },
+            { id:'openvpn', name:'OpenVPN', emoji:'\uD83D\uDD11', sub:false },
+            { id:'l2tp', name:'L2TP', emoji:'\uD83D\uDD12', sub:false },
+            { id:'ssl', name:'SSL VPN', emoji:'\uD83D\uDD0F', sub:false },
+            { id:'splitnet', name:'SplitNet', emoji:'\uD83C\uDF10', sub:false },
+            { id:'awg', name:'AmneziaWG', emoji:'\uD83D\uDEE1\uFE0F', sub:false },
+            { id:'wireguard', name:'WireGuard', emoji:'\uD83D\uDD35', sub:false },
+        ];
+        const PROXIES = [
+            { id:'tg', name:'TG Proxy', emoji:'\uD83D\uDCF1' },
+            { id:'white', name:'White Proxy', emoji:'\uD83D\uDEE1\uFE0F' },
+            { id:'socks5', name:'Socks5', emoji:'\uD83E\uDDE6' },
+            { id:'dns', name:'DNS', emoji:'\uD83C\uDF10' },
+        ];
+        const DIR_DETAILS = {
+            sstp: [
+                { c:'\uD83C\uDDF7\uD83C\uDDFA Russia', h:'vpn250254447.opengw.net:1362', u:'vpn', p:'vpn' },
+                { c:'\uD83C\uDDEB\uD83C\uDDEE Finland', h:'85.23.9.73:995', u:'vpn', p:'vpn' },
+                { c:'\uD83C\uDDE8\uD83C\uDDED Switzerland', h:'159.26.99.230:1880', u:'vpn', p:'vpn' },
+            ],
+            openvpn: [
+                { c:'\uD83C\uDDF7\uD83C\uDDFA Russia', f:'Russia.ovpn' },
+                { c:'\uD83C\uDDEF\uD83C\uDDF5 Japan', f:'Japan.ovpn', n:'Contact @AkitaUS' },
+            ],
+            l2tp: [{ c:'', h:'public-vpn-0.opengw.net', u:'vpn', p:'vpn', s:'vpn', single:true }],
+            ssl: [
+                { c:'\uD83C\uDDEB\uD83C\uDDEE Finland', h:'85.23.9.73', tc:'995', ud:'995', u:'vpn', p:'vpn' },
+                { c:'\uD83C\uDDE8\uD83C\uDDED Switzerland', h:'159.26.99.230', tc:'1880', ud:'N/A', u:'vpn', p:'vpn' },
+            ],
+            splitnet: [
+                { c:'\uD83C\uDDEB\uD83C\uDDEE Finland', u:'vpn', p:'vpn', s:'vpn' },
+                { c:'\uD83C\uDDE8\uD83C\uDDED Switzerland', u:'vpn', p:'vpn', s:'vpn' },
+            ],
+            awg: [
+                { c:'\uD83D\uDDF0\uFE0F StarLink', f:'StarLink.conf' },
+                { c:'\uD83C\uDDFA\uD83C\uDDF8 USA', f:'USA.conf' },
+                { c:'\uD83C\uDDEB\uD83C\uDDEE Finland', f:'Finland.conf' },
+                { c:'\uD83C\uDDF8\uD83C\uDDEA Sweden', f:'Sweden.conf' },
+                { c:'\uD83C\uDDE8\uD83C\uDDED Switzerland', f:'Switzerland.conf' },
+                { c:'\uD83C\uDF0D Antarctica', f:'Antarctica.conf' },
+            ],
+            wireguard: [{ c:'', n:'Contact @AkitaUS in bot', single:true }],
+        };
 
         function loginWithTelegram() {
             tg.HapticFeedback.impactOccurred('medium');
-            try {
-                const d = tg.initDataUnsafe;
+            try { const d = tg.initDataUnsafe;
                 if (d && d.user) { userData = d.user; showApp(); }
-                else { tg.showAlert('Open from Telegram.'); }
-            } catch(e) { tg.showAlert('Error: ' + e.message); }
+                else tg.showAlert('Open from Telegram.');
+            } catch(e) { tg.showAlert('Error: '+e.message); }
         }
         function showApp() {
             document.getElementById('page-login').style.display = 'none';
@@ -671,24 +625,19 @@
         function parseUrlParams() {
             const p = new URLSearchParams(window.location.search);
             if (p.get('balance')) userBalance = parseFloat(p.get('balance'));
-            subData = {
-                mini: p.get('mini') || '', full: p.get('full') || '',
-                vless: p.get('vless') || '', vmess: p.get('vmess') || '',
-                trojan: p.get('trojan') || '', ss: p.get('ss') || '',
-                hysteria2: p.get('hysteria2') || '',
-            };
+            subData = {};
+            ['mini','full','vless','vmess','trojan','ss','hysteria2'].forEach(k => { subData[k] = p.get(k) || ''; });
         }
 
         function showPage(name) {
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            const navItem = document.querySelector('.nav-item[data-page="' + name + '"]');
-            if (navItem) navItem.classList.add('active');
-            document.getElementById('page-' + name).classList.add('active');
-            if (name === 'profile') renderProfile();
-            if (name === 'proxies') renderProxies();
-            if (name === 'tor') renderTor();
-            if (name === 'admin') renderAdmin();
+            const ni = document.querySelector(`.nav-item[data-page="${name}"]`);
+            if (ni) ni.classList.add('active');
+            document.getElementById('page-'+name).classList.add('active');
+            if (name==='profile') renderProfile();
+            if (name==='home') renderHome();
+            if (name==='admin') renderAdmin();
             tg.HapticFeedback.impactOccurred('light');
         }
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -697,287 +646,283 @@
 
         function initApp() {
             parseUrlParams();
-            renderSubs();
-            renderDirProtos();
+            renderHome();
             renderProfile();
             renderFeatures();
-            renderProtocolTags();
             updateStatus();
             if (isAdmin()) {
                 const nav = document.querySelector('.bottom-nav');
                 const btn = document.createElement('button');
-                btn.className = 'nav-item';
-                btn.dataset.page = 'admin';
+                btn.className = 'nav-item'; btn.dataset.page = 'admin';
                 btn.innerHTML = '<span class="icon">\uD83D\uDC64</span><span class="label">Admin</span>';
                 btn.addEventListener('click', () => showPage('admin'));
                 nav.appendChild(btn);
-                if (document.getElementById('page-admin')) {
-                    document.getElementById('page-admin').classList.remove('active');
-                }
-            } else {
-                const ap = document.getElementById('page-admin');
-                if (ap) ap.style.display = 'none';
             }
+            // Home by default
+            showPage('home');
         }
-        try {
-            const d = tg.initDataUnsafe;
+        try { const d = tg.initDataUnsafe;
             if (d && d.user) { userData = d.user; showApp(); }
         } catch(e) {}
 
-        // ---- PROTOCOLS PAGE ----
-        function renderSubs() {
-            const c = document.getElementById('subsList');
-            c.innerHTML = '';
-            ['mini','full'].forEach(k => {
-                const url = subData[k] || '';
-                const el = document.createElement('div');
-                el.className = 'sub-card';
-                el.innerHTML = '<div class="sub-icon">' + SUBS[k].emoji + '</div><div class="sub-body"><div class="name">' + SUBS[k].name + '</div><div class="info">' + (url ? '\u2705 Ready' : 'Get from bot') + '</div></div>';
-                el.onclick = () => showSubDetail(k, url);
-                c.appendChild(el);
+        // ---- HOME ----
+        function renderHome() {
+            const hp = document.getElementById('homeProtocols');
+            hp.innerHTML = '';
+            const grid = document.createElement('div');
+            grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;';
+            ALL_PROTO.forEach(p => {
+                const t = document.createElement('div');
+                t.className = 'proto-tile';
+                t.innerHTML = '<div class="emoji">'+p.emoji+'</div><div class="name">'+p.name+'</div>';
+                t.onclick = () => clickProto(p.id);
+                grid.appendChild(t);
             });
-            // Individual sub-protocols (if URLs passed by bot)
-            const protoSubs = ['vless','vmess','trojan','ss','hysteria2'];
-            const hasAny = protoSubs.some(p => subData[p]);
-            if (hasAny) {
-                const pdiv = document.createElement('div');
-                pdiv.style.cssText = 'margin-top:8px;';
-                pdiv.innerHTML = '<div class="section-title">Protocol subscriptions</div>';
-                const grid = document.createElement('div');
-                grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:6px;';
-                protoSubs.forEach(id => {
-                    const url = subData[id] || '';
-                    if (!url) return;
-                    const names = { vless:'VLESS', vmess:'VMess', trojan:'Trojan', ss:'ShadowSocks', hysteria2:'Hysteria2' };
-                    const tile = document.createElement('div');
-                    tile.className = 'proto-tile';
-                    tile.innerHTML = '<div class="name">' + (names[id]||id) + '</div><div class="desc">Tap to copy</div>';
-                    tile.onclick = () => copyText(url);
-                    grid.appendChild(tile);
-                });
-                pdiv.appendChild(grid);
-                c.appendChild(pdiv);
-            }
-        }
-        function renderDirProtos() {
-            const c = document.getElementById('dirProtoList');
-            c.innerHTML = '';
-            Object.keys(DIR_PROTOCOLS).forEach(id => {
-                const p = DIR_PROTOCOLS[id];
-                const el = document.createElement('div');
-                el.className = 'sub-card';
-                el.innerHTML = '<div class="sub-icon">' + p.emoji + '</div><div class="sub-body"><div class="name">' + p.name + '</div><div class="info">Tap for credentials</div></div>';
-                el.onclick = () => showDirProto(id);
-                c.appendChild(el);
+            hp.appendChild(grid);
+
+            // Proxies
+            const hpx = document.getElementById('homeProxies');
+            hpx.innerHTML = '';
+            const prow = document.createElement('div');
+            prow.style.cssText = 'display:flex;gap:6px;';
+            PROXIES.forEach(p => {
+                const b = document.createElement('button');
+                b.style.cssText = 'flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:10px;font-weight:500;cursor:pointer;';
+                b.innerHTML = p.emoji+' '+p.name;
+                b.onclick = () => tg.showAlert('Use /proxy in bot @AkitaUS');
+                prow.appendChild(b);
             });
-        }
-        function showSubDetail(k, url) {
-            const s = SUBS[k];
-            let body;
-            if (url) {
-                body = '<p>Status: Active</p><p style="word-break:break-all;background:#111;padding:8px;border-radius:6px;font-size:10px;font-family:monospace;margin:8px 0;">' + url + '</p>' +
-                    '<button class="close-btn" onclick="copyText(\'' + url + '\')">Copy link</button>' +
-                    '<button class="close-btn" style="margin-top:4px;" onclick="tg.openLink(\'' + url + '\')">Open in browser</button>' +
-                    '<p style="font-size:10px;color:var(--text2);margin-top:8px;">Paste this link in HApp / v2rayNG / Hiddify as subscription</p>';
-            } else {
-                body = '<p>No subscription yet.<br>Buy from bot @AkitaUS</p>';
-            }
-            openModal(s.name + ' Subscription', body);
-        }
-        function showDirProto(id) {
-            const p = DIR_PROTOCOLS[id];
-            if (!p) return;
-            if (id === 'l2tp') {
-                openModal('L2TP/IPsec', '<p>Server: <code>' + p.info.server + '</code></p><p>User: <code>' + p.info.user + '</code></p><p>Pass: <code>' + p.info.pass + '</code></p><p>Secret: <code>' + p.info.secret + '</code></p><p style="font-size:10px;color:var(--text2);">Windows: VPN > Workplace > L2TP/IPsec PSK</p>');
-            } else if (id === 'wireguard') {
-                openModal('WireGuard', '<p>' + p.info.note + '</p><p>Contact @AkitaUS in bot to get .conf</p>');
-            } else if (p.servers) {
-                let html = '';
-                p.servers.forEach((s, i) => {
-                    html += '<div class="sub-card" style="cursor:default;margin-bottom:4px;" onclick="showServerDetail(\'' + id + '\',' + i + ')">';
-                    html += '<div class="sub-body"><div class="name">' + s.country + '</div>';
-                    if (s.host) html += '<div class="info">' + s.host + '</div>';
-                    else if (s.file) html += '<div class="info">' + s.file + '</div>';
-                    html += '</div></div>';
-                });
-                openModal(p.name, html);
-            }
-        }
-        const BASE_URL = 'https://raw.githubusercontent.com/AkitaFI/anix-vpn-miniapp/main/configs/';
+            hpx.appendChild(prow);
 
-        function showServerDetail(id, idx) {
-            const p = DIR_PROTOCOLS[id];
-            const s = p.servers[idx];
-            if (!s) return;
-            let html = '<div class="encrypt-card"><div class="title">' + s.country + '</div>';
-            if (s.host) html += '<div class="key">Server: ' + s.host + '</div>';
-            if (s.user) html += '<div class="key">User: ' + s.user + '</div>';
-            if (s.pass) html += '<div class="key">Pass: ' + s.pass + '</div>';
-            if (s.secret) html += '<div class="key">Secret: ' + s.secret + '</div>';
-            if (s.tcp) html += '<div class="key">TCP: ' + s.tcp + '</div>';
-            if (s.udp) html += '<div class="key">UDP: ' + s.udp + '</div>';
-            if (s.file) {
-                const fileUrl = BASE_URL + s.file;
-                html += '<div class="key">Config: ' + s.file + '</div>';
-                html += '<button class="close-btn" onclick="window.open(\'' + fileUrl + '\', \'_blank\')">Download ' + s.file + '</button>';
-            }
-            if (s.note) html += '<div class="key" style="color:var(--text2);margin-top:4px;">' + s.note + '</div>';
-            html += '</div>';
-            if (s.host) {
-                html += '<button class="close-btn" onclick="copyText(\'' + s.host + '\')">Copy server</button>';
-            }
-            openModal(p.name + ' - ' + s.country, html);
-        }
-
-        // ---- PROXIES PAGE ----
-        function renderProxies() {
-            const c = document.getElementById('proxiesList');
-            c.innerHTML = '';
-            Object.keys(PROXIES).forEach(k => {
-                const p = PROXIES[k];
-                const el = document.createElement('div');
-                el.className = 'sub-card';
-                el.innerHTML = '<div class="sub-icon">' + p.emoji + '</div><div class="sub-body"><div class="name">' + p.name + '</div><div class="info">' + p.desc + '</div></div>';
-                el.onclick = () => { tg.showAlert('Get proxy from bot @AkitaUS via /proxy command'); };
-                c.appendChild(el);
-            });
-        }
-
-        // ---- TOR PAGE ----
-        function renderTor() {
-            const c = document.getElementById('torList');
-            c.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-            fetch('https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt', { mode: 'cors' })
+            // TOR
+            const ht = document.getElementById('homeTor');
+            ht.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            fetch('https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt', {mode:'cors'})
                 .then(r => r.ok ? r.text() : Promise.reject())
                 .then(text => {
-                    const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 30);
-                    c.innerHTML = '<p style="font-size:11px;color:var(--text2);margin-bottom:8px;">' + lines.length + ' bridges loaded</p>' +
-                        lines.map(l => '<div class="sub-card" style="cursor:pointer;" onclick="copyText(\'' + l.trim() + '\')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:10px;word-break:break-all;">' + l.trim() + '</div></div></div>').join('');
+                    const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0,20);
+                    ht.innerHTML = lines.map(l =>
+                        `<div class="sub-card" style="cursor:pointer;padding:8px 12px;" onclick="copyText('${l.trim()}')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:9px;word-break:break-all;">${l.trim()}</div></div></div>`
+                    ).join('');
                 })
-                .catch(() => {
-                    c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Use /tor command in bot @AkitaUS</p>';
-                });
+                .catch(() => { ht.innerHTML = '<p style="color:var(--text2);font-size:11px;">Use /tor in bot @AkitaUS</p>'; });
         }
 
-        // ---- ADMIN PAGE ----
-        function isAdmin() {
-            return userData && userData.id === ADMIN_ID;
-        }
-        function renderAdmin() {
-            const c = document.getElementById('adminDashboard');
-            if (!isAdmin()) {
-                c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Access denied</p>';
+        function clickProto(id) {
+            if (id === 'mini' || id === 'full') {
+                showSubDetail(id, subData[id] || '');
                 return;
             }
-            const params = new URLSearchParams(window.location.search);
-            const users = params.get('users') || 'N/A';
-            const subs = params.get('subs') || 'N/A';
-            const balance = params.get('balance') || 'N/A';
-
-            c.innerHTML =
-                '<div class="reveal-up"><div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;">' +
-                '<div class="stat-card"><div class="stat-label">Users</div><div class="stat-value" style="font-size:16px;">' + users + '</div></div>' +
-                '<div class="stat-card"><div class="stat-label">Subscriptions</div><div class="stat-value" style="font-size:16px;">' + subs + '</div></div>' +
-                '<div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value" style="font-size:16px;">$' + balance + '</div></div></div></div>' +
-                '<div class="reveal-up" style="animation-delay:0.1s;"><div class="about-card"><div class="a-label">VPN improvement (30 days)</div><div style="margin-top:6px;">' +
-                '<div class="feature-compare"><span>New users</span><span style="text-align:center;color:var(--green);">+47%</span></div>' +
-                '<div class="feature-compare"><span>Traffic (TB)</span><span style="text-align:center;color:var(--green);">+112%</span></div>' +
-                '<div class="feature-compare"><span>Uptime</span><span style="text-align:center;color:var(--green);">99.8%</span></div>' +
-                '<div class="feature-compare"><span>Protocols added</span><span style="text-align:center;color:var(--green);">+3</span></div></div></div></div>' +
-                '<div class="reveal-up" style="animation-delay:0.2s;"><div class="balance-row" style="margin-bottom:0;"><div><div class="label">Actions</div></div><div class="actions">' +
-                '<button onclick="adminBroadcast()">Broadcast</button>' +
-                '<button onclick="adminRefresh()">Refresh</button></div></div></div>';
-        }
-        function adminBroadcast() {
-            tg.sendData(JSON.stringify({ action: 'broadcast', admin: true }));
-            tg.showAlert('Broadcast request sent to bot');
-        }
-        function adminRefresh() {
-            tg.showAlert('Refresh bot data via /stats in @AkitaUS');
+            if (DIR_DETAILS[id]) {
+                showDirProto(id);
+                return;
+            }
+            // sub-protocols (vless, vmess, etc.)
+            const url = subData[id] || '';
+            if (url) { copyText(url); showToast('Copied subscription URL'); }
+            else tg.showAlert('Get subscription from bot @AkitaUS');
         }
 
-        // ---- PROFILE ----
+        function showSubDetail(k, url) {
+            const names = {mini:'Mini',full:'Full',vless:'VLESS',vmess:'VMess',trojan:'Trojan',ss:'ShadowSocks',hysteria2:'Hysteria2'};
+            const body = url ?
+                '<div class="encrypt-card"><div class="title">Subscription URL</div><div class="key" style="font-size:9px;">'+url+'</div></div>'+
+                '<button class="close-btn" onclick="copyText(\''+url+'\')">Copy URL</button>'+
+                '<button class="close-btn" style="margin-top:4px;" onclick="tg.openLink(\''+url+'\')">Open</button>'+
+                '<p style="font-size:9px;color:var(--text2);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
+                : '<p>Buy from bot @AkitaUS</p>';
+            openModal((names[k]||k)+' Subscription', body);
+        }
+
+        function showDirProto(id) {
+            const servers = DIR_DETAILS[id];
+            if (!servers) return;
+            const names = {sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP/IPsec',ssl:'SSL VPN',splitnet:'SplitNet',awg:'AmneziaWG',wireguard:'WireGuard'};
+            const n = names[id]||id;
+            if (id === 'wireguard') {
+                openModal(n, '<p style="color:var(--text2);">'+servers[0].n+'</p>');
+                return;
+            }
+            let html = '';
+            servers.forEach((s,i) => {
+                html += '<div class="sub-card" style="cursor:default;margin-bottom:4px;padding:10px;" onclick="showServer(\''+id+'\','+i+')">';
+                html += '<div class="sub-body"><div class="name" style="font-size:12px;">'+(s.c||n)+'</div>';
+                if (s.h) html += '<div class="info" style="font-size:10px;">'+s.h+'</div>';
+                else if (s.f) html += '<div class="info" style="font-size:10px;">'+s.f+'</div>';
+                html += '</div></div>';
+            });
+            openModal(n, html);
+        }
+
+        function showServer(id, idx) {
+            const s = DIR_DETAILS[id][idx];
+            if (!s) return;
+            let html = '<div class="encrypt-card"><div class="title">'+(s.c||'')+'</div>';
+            if (s.h) html += '<div class="key">Server: '+s.h+'</div>';
+            if (s.u) html += '<div class="key">User: '+s.u+'</div>';
+            if (s.p) html += '<div class="key">Pass: '+s.p+'</div>';
+            if (s.s) html += '<div class="key">Secret: '+s.s+'</div>';
+            if (s.tc) html += '<div class="key">TCP: '+s.tc+'</div>';
+            if (s.ud) html += '<div class="key">UDP: '+s.ud+'</div>';
+            if (s.f) { const fu = BASE+s.f; html += '<div class="key">Config: '+s.f+'</div><button class="close-btn" onclick="window.open(\''+fu+'\',\'_blank\')">Download</button>'; }
+            if (s.n) html += '<div class="key" style="color:var(--text2);margin-top:4px;">'+s.n+'</div>';
+            html += '</div>';
+            if (s.h) html += '<button class="close-btn" onclick="copyText(\''+s.h+'\')">Copy server</button>';
+            openModal(({sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP',ssl:'SSL',splitnet:'SplitNet',awg:'AWG',wireguard:'WireGuard'}[id]||id)+(s.c?' - '+s.c:''), html);
+        }
+
+        // ---- PROFILE (with analytics, donations, top user) ----
+        let trafficHistory = [12,15,23,28,34,41,47,52,58,64,71,78].map(v => v + Math.random()*5);
+
         function renderProfile() {
             const content = document.getElementById('profileContent');
             const loading = document.getElementById('profileLoading');
             const uid = userData ? userData.id : 'Unknown';
-            const username = userData ? userData.username : '';
-            const fn = (userData ? userData.first_name || '' : 'User') + (userData && userData.last_name ? ' ' + userData.last_name : '');
-            const photoUrl = userData && userData.photo_url ? userData.photo_url : null;
-
+            const un = userData ? userData.username : '';
+            const fn = (userData ? userData.first_name||'' : 'User') + (userData && userData.last_name ? ' '+userData.last_name : '');
+            const pu = userData && userData.photo_url ? userData.photo_url : null;
             loading.style.display = 'none';
             content.style.display = 'block';
-
-            const trafficUsed = (Math.random() * 100 + 10).toFixed(1);
-            const trafficPct = (Math.random() * 15 + 1).toFixed(1);
-
-            const avatar = photoUrl
-                ? '<img src="' + photoUrl + '" alt="avatar">'
-                : getInitials(fn);
+            const av = pu ? '<img src="'+pu+'" alt="av">' : getInitials(fn);
+            const last = trafficHistory[trafficHistory.length-1];
+            const prev = trafficHistory[0];
+            const growth = ((last - prev) / prev * 100).toFixed(0);
+            const peak = trafficHistory.reduce((a,b)=>Math.max(a,b), 0);
 
             content.innerHTML =
-                '<div class="reveal-up"><div class="profile-header"><div class="profile-avatar">' + avatar + '</div><div class="profile-info"><h2>' + (fn || 'Anonymous') + '</h2><div class="uid">' + (username ? '@' + username : 'ID: ' + uid) + '</div></div></div></div>' +
-                '<div class="reveal-up" style="animation-delay:0.05s;"><div class="balance-row"><div><div class="label">Balance</div><div class="amount">$' + userBalance.toFixed(2) + '</div></div><div class="actions"><button onclick="showTopUp()">Top Up</button><button onclick="showHistory()">History</button></div></div></div>' +
-                '<div class="reveal-up" style="animation-delay:0.1s;"><div class="stat-grid"><div class="stat-card"><div class="stat-label">Traffic Used</div><div class="stat-value">' + trafficUsed + '</div><div class="stat-sub">of 10,240 GB</div><div class="traffic-bar"><div class="fill" style="width:' + trafficPct + '%"></div></div></div><div class="stat-card"><div class="stat-label">Subscription</div><div class="stat-value">Active</div><div class="stat-sub">until Dec 2027</div></div></div></div>' +
-                '<div style="margin-top:4px;"><div class="section-title">Subscriptions</div>' +
-                '<div class="sub-card" onclick="showSubDetail(\'mini\', subData.mini)"><div class="sub-icon">\uD83D\uDCF1</div><div class="sub-body"><div class="name">Mini</div><div class="info">' + (subData.mini ? 'Tap to copy' : 'Get from bot') + '</div></div></div>' +
-                '<div class="sub-card" onclick="showSubDetail(\'full\', subData.full)"><div class="sub-icon">\uD83D\uDE80</div><div class="sub-body"><div class="name">Full</div><div class="info">' + (subData.full ? 'Tap to copy' : 'Get from bot') + '</div></div></div></div>';
+                `<div class="reveal-up">
+                    <div class="profile-header">
+                        <div class="profile-avatar">${av}</div>
+                        <div class="profile-info">
+                            <h2>${fn||'Anonymous'}</h2>
+                            <div class="uid">${un?'@'+un:'ID: '+uid}</div>
+                            <div style="display:flex;gap:4px;margin-top:4px;">
+                                <span class="tag">\uD83D\uDCB0 $${userBalance.toFixed(2)}</span>
+                                <span class="tag">\uD83D\uDEE1\uFE0F Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.05s;">
+                    <div class="about-card">
+                        <div class="a-label">Traffic analytics (30 days)</div>
+                        <div style="display:flex;align-items:end;gap:2px;height:40px;margin-top:6px;padding:0 2px;">
+                            ${trafficHistory.map((v,i) => {
+                                const h = (v/peak*100).toFixed(0);
+                                return `<div style="flex:1;background:var(--card2);border-radius:2px 2px 0 0;height:${h}%;min-height:4px;transition:height 0.5s;"></div>`;
+                            }).join('')}
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+                            <span style="font-size:9px;color:var(--text2);">${prev.toFixed(0)} GB</span>
+                            <span style="font-size:9px;color:var(--green);">+${growth}%</span>
+                            <span style="font-size:9px;color:var(--text2);">${last.toFixed(0)} GB</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.1s;">
+                    <div class="stat-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Traffic Used</div>
+                            <div class="stat-value">${last.toFixed(1)}</div>
+                            <div class="stat-sub">of 10,240 GB</div>
+                            <div class="traffic-bar"><div class="fill" style="width:${(last/10240*100).toFixed(2)}%"></div></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Top VPN User</div>
+                            <div class="stat-value" style="font-size:14px;">\uD83C\uDFC6 ${un||'@AkitaUS'}</div>
+                            <div class="stat-sub">${last.toFixed(0)} GB used</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.15s;">
+                    <div class="balance-row" style="margin-bottom:0;">
+                        <div><div class="label">Subscriptions</div>
+                            <div class="amount" style="font-size:14px;">${subData.mini?'\u2705 Mini Ready':'\u274C Mini'}</div>
+                        </div>
+                        <div class="actions">
+                            <button onclick="showSubDetail('mini', subData.mini)">Mini</button>
+                            <button onclick="showSubDetail('full', subData.full)">Full</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.2s;">
+                    <div class="balance-row" style="margin-bottom:0;">
+                        <div><div class="label">Support</div></div>
+                        <div class="actions">
+                            <button onclick="doDonate()">\uD83D\uDCB0 Donate</button>
+                            <button onclick="tg.openTelegramLink('https://t.me/AkitaUS')">\uD83D\uDCAC Chat</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.25s;">
+                    <div class="about-card" style="margin-top:4px;">
+                        <div class="a-label">Connected via</div>
+                        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
+                            <span style="font-size:16px;">\uD83E\uDD16</span>
+                            <span style="font-size:11px;color:var(--text2);">Telegram Mini App + @AkitaUS bot</span>
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function doDonate() {
+            openModal('Donate',
+                '<p>Support Anix VPN development:</p>'+
+                '<div style="margin:8px 0;"><button class="close-btn" onclick="tg.openTelegramLink(\'https://t.me/AkitaUS\')">Contact @AkitaUS</button></div>'+
+                '<p style="font-size:10px;color:var(--text2);">USDT, BTC, or card transfers available</p>');
         }
 
         function showTopUp() {
             const c = document.getElementById('modalBody');
             document.getElementById('modalTitle').textContent = 'Top Up';
-            c.innerHTML = '<p style="margin-bottom:10px;">Choose amount:</p>' +
-                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">' +
-                [5,10,25,50].map(a => '<button style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;" onclick="closeModal();showToast(\'Selected $' + a + '\')">$' + a + '</button>').join('') +
-                '</div><p style="font-size:10px;color:var(--text2);">Contact @AkitaUS to complete</p>';
+            c.innerHTML = '<p style="margin-bottom:10px;">Choose amount:</p>'+
+                '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">'+
+                [5,10,25,50].map(a => `<button style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;" onclick="closeModal();showToast('Selected $${a}')">$${a}</button>`).join('')+
+                '</div><p style="font-size:10px;color:var(--text2);">Contact @AkitaUS</p>';
             document.getElementById('modalOverlay').classList.add('show');
         }
-        function showHistory() {
-            document.getElementById('modalTitle').textContent = 'History';
-            document.getElementById('modalBody').innerHTML =
-                '<div class="history-item"><div class="history-icon">\uD83D\uDCB5</div><div class="history-detail"><div class="h-title">Top Up</div><div class="h-sub">Balance refill</div></div><span class="history-amount positive">+$10</span></div>' +
-                '<div class="history-item"><div class="history-icon">\uD83D\uDD12</div><div class="history-detail"><div class="h-title">Full Subscription</div><div class="h-sub">VLESS</div></div><span class="history-amount negative">-$25</span></div>' +
-                '<div class="history-item"><div class="history-icon">\uD83D\uDCF1</div><div class="history-detail"><div class="h-title">Mini Subscription</div><div class="h-sub">All protocols</div></div><span class="history-amount negative">-$5</span></div>';
-            document.getElementById('modalOverlay').classList.add('show');
+
+        // ---- ADMIN ----
+        function isAdmin() { return userData && userData.id === ADMIN_ID; }
+        function renderAdmin() {
+            const c = document.getElementById('adminDashboard');
+            if (!c) return;
+            if (!isAdmin()) { c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Access denied</p>'; return; }
+            const p = new URLSearchParams(window.location.search);
+            c.innerHTML =
+                '<div class="reveal-up"><div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;">'+
+                '<div class="stat-card"><div class="stat-label">Users</div><div class="stat-value" style="font-size:16px;">'+(p.get('users')||'N/A')+'</div></div>'+
+                '<div class="stat-card"><div class="stat-label">Subs</div><div class="stat-value" style="font-size:16px;">'+(p.get('subs')||'N/A')+'</div></div>'+
+                '<div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value" style="font-size:16px;">$'+(p.get('balance')||'N/A')+'</div></div></div></div>'+
+                '<div class="reveal-up" style="animation-delay:0.1s;"><div class="about-card"><div class="a-label">Growth (30d)</div>'+
+                '<div class="feature-compare"><span>Users</span><span style="color:var(--green);">+47%</span></div>'+
+                '<div class="feature-compare"><span>Traffic</span><span style="color:var(--green);">+112%</span></div>'+
+                '<div class="feature-compare"><span>Uptime</span><span style="color:var(--green);">99.8%</span></div></div></div>'+
+                '<div class="reveal-up" style="animation-delay:0.2s;"><div class="balance-row" style="margin-bottom:0;"><div><div class="label">Actions</div></div><div class="actions">'+
+                '<button onclick="adminBroadcast()">Broadcast</button></div></div></div>';
         }
+        function adminBroadcast() { tg.sendData(JSON.stringify({action:'broadcast',admin:true})); tg.showAlert('Sent'); }
 
         // ---- ABOUT ----
         function renderFeatures() {
             const list = document.getElementById('featureComparison');
-            const features = [
-                'Bypass whitelist blocks','All protocols in one','Highest speed & low ping','Deep DPI bypass',
-                'Traffic encryption','Auto-update configs','Free trial','No logs policy','24/7 support','HApp one-click'
-            ];
+            if (!list) return;
+            const fs = ['Bypass whitelist','All protocols','Low ping / High speed','DPI bypass','No logs','24/7'];
             list.innerHTML = '<div class="feature-compare header"><span>Feature</span><span style="text-align:center;">Anix</span></div>';
-            features.forEach(f => {
-                const row = document.createElement('div');
-                row.className = 'feature-compare';
-                row.innerHTML = '<span>' + f + '</span><span style="text-align:center;font-size:12px;color:var(--green);">\u2713</span>';
-                list.appendChild(row);
-            });
-        }
-        function renderProtocolTags() {
-            const c = document.getElementById('protocolTags');
-            const all = { ...SUBS };
-            Object.keys(DIR_PROTOCOLS).forEach(k => { all[k] = { name: DIR_PROTOCOLS[k].name, emoji: DIR_PROTOCOLS[k].emoji }; });
-            Object.keys(all).forEach(k => {
-                const t = document.createElement('span');
-                t.className = 'tag';
-                t.textContent = all[k].emoji + ' ' + all[k].name;
-                c.appendChild(t);
+            fs.forEach(f => {
+                const r = document.createElement('div'); r.className = 'feature-compare';
+                r.innerHTML = '<span>'+f+'</span><span style="text-align:center;color:var(--green);">\u2713</span>';
+                list.appendChild(r);
             });
         }
         function updateStatus() {
-            const badge = document.querySelector('.top-bar .status');
-            if (badge) badge.innerHTML = '<span class="dot"></span>' + (navigator.onLine ? 'Online' : 'Offline');
+            const b = document.querySelector('.top-bar .status');
+            if (b) b.innerHTML = '<span class="dot"></span>'+(navigator.onLine?'Online':'Offline');
         }
 
         // ---- UTILS ----
-        function getInitials(name) { return name ? name.substring(0,2).toUpperCase() : '?'; }
-        function copyText(t) {
-            navigator.clipboard.writeText(t).then(() => showToast('Copied'));
-        }
+        function getInitials(n) { return n ? n.substring(0,2).toUpperCase() : '?'; }
+        function copyText(t) { navigator.clipboard.writeText(t).then(()=>showToast('Copied')); }
         function openModal(title, body) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalBody').innerHTML = body;
@@ -987,12 +932,11 @@
         function showToast(msg) {
             const t = document.createElement('div');
             t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#ccc;padding:8px 20px;border-radius:8px;font-size:12px;z-index:300;border:1px solid #262626;animation:revealUp 0.25s ease;';
-            t.textContent = msg;
-            document.body.appendChild(t);
-            setTimeout(() => t.remove(), 1200);
+            t.textContent = msg; document.body.appendChild(t);
+            setTimeout(()=>t.remove(), 1200);
         }
-        document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+        document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
+        document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
     </script>
 </body>
 </html>
