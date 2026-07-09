@@ -455,20 +455,41 @@
 
             <!-- Protocols Page -->
             <div class="page" id="page-protocols">
-                <p style="font-size:11px;color:var(--text2);margin-bottom:10px;">Select protocol</p>
-                <div class="proto-grid" id="protocolGrid"></div>
-                <div id="connectSection" style="display:none;">
-                    <div style="font-size:11px;color:var(--text2);margin-bottom:4px;" id="selectedProtoLabel">Selected: —</div>
-                    <div class="connect-actions">
-                        <button class="btn-connect primary" onclick="connectHApp()">Connect with HApp</button>
-                        <button class="btn-connect secondary" onclick="showInstructions()">How to use</button>
+                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Subscriptions</p>
+                <div id="subsList"></div>
+                <p style="font-size:11px;color:var(--text2);margin:12px 0 8px;">Direct protocols</p>
+                <div id="dirProtoList"></div>
+            </div>
+
+            <!-- Proxies Page -->
+            <div class="page" id="page-proxies">
+                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Available proxies</p>
+                <div id="proxiesList"></div>
+            </div>
+
+            <!-- TOR Page -->
+            <div class="page" id="page-tor">
+                <div class="terminal-window" style="margin-bottom:8px;">
+                    <div class="terminal-top">
+                        <span class="terminal-dot red"></span>
+                        <span class="terminal-dot yellow"></span>
+                        <span class="terminal-dot green"></span>
+                        <span style="margin-left:6px;">tor bridges</span>
                     </div>
-                    <div class="encrypt-card" id="encryptCard" style="display:none;">
-                        <div class="title">Encryption key</div>
-                        <div class="key" id="encryptKey">happ://crypt5/...</div>
-                        <button class="copy-btn" onclick="copyEncryptKey()">Copy</button>
+                    <div class="terminal-body">
+                        <div><span class="val">Tor bridges provide access</span></div>
+                        <div><span class="val">to the Tor network through</span></div>
+                        <div><span class="val">censorship-resistant entry</span></div>
+                        <div><span class="val">nodes. Tap a bridge to copy.</span></div>
                     </div>
                 </div>
+                <div id="torList"></div>
+            </div>
+
+            <!-- Admin Page -->
+            <div class="page" id="page-admin">
+                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">Admin Panel</p>
+                <div id="adminDashboard"></div>
             </div>
 
             <!-- About Page -->
@@ -520,6 +541,7 @@
                         <a href="https://github.com/YufusPE/CIDR-internet" class="link-btn">GitHub</a>
                         <a href="https://AnixSec.pages.dev" class="link-btn">Web</a>
                         <a href="https://t.me/AnixSecVPN" class="link-btn">Channel</a>
+                        <a href="https://t.me/AkitaUS" class="link-btn">Admin</a>
                     </div>
                 </div>
             </div>
@@ -535,11 +557,20 @@
                 <span class="icon">&#x1F517;</span>
                 <span class="label">Protocols</span>
             </button>
+            <button class="nav-item" data-page="proxies">
+                <span class="icon">&#x1F310;</span>
+                <span class="label">Proxies</span>
+            </button>
+            <button class="nav-item" data-page="tor">
+                <span class="icon">&#x1F5A5;</span>
+                <span class="label">TOR</span>
+            </button>
             <button class="nav-item" data-page="about">
                 <span class="icon">&#x2139;&#xFE0F;</span>
                 <span class="label">About</span>
             </button>
         </div>
+        <!-- Admin nav item injected by JS if admin -->
     </div>
 
     <!-- Modal -->
@@ -556,216 +587,294 @@
         tg.expand();
         tg.ready();
 
-        let selectedProtocol = null;
         let userData = null;
-        let subData = null;
         let userBalance = 0;
+        let subData = {};
+        let selProto = null;
 
-        const ALL_PROTOCOLS = [
-            { id: 'vless', name: 'VLESS', emoji: '\uD83D\uDD17', desc: 'XTLS Vision', encrypted: true },
-            { id: 'vmess', name: 'VMess', emoji: '\uD83D\uDD17', desc: 'WebSocket / TCP', encrypted: true },
-            { id: 'trojan', name: 'Trojan', emoji: '\uD83D\uDEE1\uFE0F', desc: 'HTTPS mimic', encrypted: true },
-            { id: 'ss', name: 'ShadowSocks', emoji: '\uD83D\uDD12', desc: 'Lightweight', encrypted: true },
-            { id: 'hysteria2', name: 'Hysteria2', emoji: '\u26A1', desc: 'HUDP / Fast', encrypted: true },
-            { id: 'awg', name: 'AmneziaWG', emoji: '\uD83D\uDEE1\uFE0F', desc: 'Obfuscated WG', encrypted: false },
-            { id: 'openvpn', name: 'OpenVPN', emoji: '\uD83D\uDD11', desc: 'Open Source', encrypted: false },
-            { id: 'sstp', name: 'SSTP', emoji: '\uD83D\uDD10', desc: 'SSL VPN', encrypted: false },
-            { id: 'l2tp', name: 'L2TP/IPsec', emoji: '\uD83D\uDD12', desc: 'Built-in OS', encrypted: false },
-            { id: 'ssl', name: 'SSL VPN', emoji: '\uD83D\uDD0F', desc: 'SoftEther', encrypted: false },
-            { id: 'splitnet', name: 'SplitNet', emoji: '\uD83C\uDF10', desc: 'Split Tunnel', encrypted: false },
-            { id: 'wireguard', name: 'WireGuard', emoji: '\uD83D\uDD35', desc: 'Modern VPN', encrypted: false }
-        ];
-
-        const FEATURES = [
-            { name: 'Bypass whitelist blocks', ok: true },
-            { name: 'All protocols in one', ok: true },
-            { name: 'Highest speed & low ping', ok: true },
-            { name: 'Deep DPI bypass', ok: true },
-            { name: 'Traffic encryption', ok: true },
-            { name: 'Auto-update configs', ok: true },
-            { name: 'Free trial', ok: true },
-            { name: 'No logs policy', ok: true },
-            { name: '24/7 support', ok: true },
-            { name: 'HApp one-click', ok: true }
-        ];
+        const SUBS = {
+            mini: { name: 'Mini', emoji: '\uD83D\uDCF1', desc: 'All protocols' },
+            full: { name: 'Full', emoji: '\uD83D\uDE80', desc: 'VLESS, 100+ servers' },
+        };
+        const SUB_PROTOCOLS = ['vless','vmess','trojan','ss','hysteria2'];
+        const DIR_PROTOCOLS = {
+            sstp: {
+                name: 'SSTP', emoji: '\uD83D\uDD10',
+                servers: [
+                    { country: '\uD83C\uDDF7\uD83C\uDDFA Russia', host: 'vpn250254447.opengw.net:1362', user: 'vpn', pass: 'vpn' },
+                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', host: '85.23.9.73:995', user: 'vpn', pass: 'vpn' },
+                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', host: '159.26.99.230:1880', user: 'vpn', pass: 'vpn' },
+                ]
+            },
+            openvpn: {
+                name: 'OpenVPN', emoji: '\uD83D\uDD11',
+                servers: [
+                    { country: '\uD83C\uDDF7\uD83C\uDDFA Russia', file: 'Russia.ovpn', note: '.ovpn file from bot' },
+                    { country: '\uD83C\uDDEF\uD83C\uDDF5 Japan', file: 'Japan.ovpn', note: 'Contact @AkitaUS' },
+                ]
+            },
+            l2tp: {
+                name: 'L2TP/IPsec', emoji: '\uD83D\uDD12',
+                info: { server: 'public-vpn-0.opengw.net', user: 'vpn', pass: 'vpn', secret: 'vpn' }
+            },
+            ssl: {
+                name: 'SSL VPN', emoji: '\uD83D\uDD0F',
+                servers: [
+                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', host: '85.23.9.73', tcp: '995', udp: '995', user: 'vpn', pass: 'vpn' },
+                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', host: '159.26.99.230', tcp: '1880', udp: 'N/A', user: 'vpn', pass: 'vpn' },
+                ]
+            },
+            splitnet: {
+                name: 'SplitNet', emoji: '\uD83C\uDF10',
+                servers: [
+                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', user: 'vpn', pass: 'vpn', secret: 'vpn' },
+                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', user: 'vpn', pass: 'vpn', secret: 'vpn' },
+                ]
+            },
+            awg: {
+                name: 'AmneziaWG', emoji: '\uD83D\uDEE1\uFE0F',
+                servers: [
+                    { country: '\uD83D\uDDF0\uFE0F StarLink', file: 'StarLink.conf', note: '.conf from bot' },
+                    { country: '\uD83C\uDDFA\uD83C\uDDF8 USA', file: 'USA.conf', note: '.conf from bot' },
+                    { country: '\uD83C\uDDEB\uD83C\uDDEE Finland', file: 'Finland.conf', note: '.conf from bot' },
+                    { country: '\uD83C\uDDF8\uD83C\uDDEA Sweden', file: 'Sweden.conf', note: '.conf from bot' },
+                    { country: '\uD83C\uDDE8\uD83C\uDDED Switzerland', file: 'Switzerland.conf', note: '.conf from bot' },
+                    { country: '\uD83C\uDF0D Antarctica', file: 'Antarctica.conf', note: '.conf from bot' },
+                ]
+            },
+            wireguard: {
+                name: 'WireGuard', emoji: '\uD83D\uDD35',
+                info: { note: '.conf from bot via @AkitaUS' }
+            },
+        };
+        const PROXIES = {
+            tg: { name: 'TG Proxy', emoji: '\uD83D\uDCF1', desc: 'MTProto proxy for Telegram' },
+            white: { name: 'White Proxy', emoji: '\uD83D\uDEE1\uFE0F', desc: 'Bypass whitelist blocks' },
+            socks5: { name: 'Socks5', emoji: '\uD83E\uDDE6', desc: 'SOCKS5 proxy' },
+            dns: { name: 'DNS Proxy', emoji: '\uD83C\uDF10', desc: 'DNS over HTTPS' },
+        };
+        const ADMIN_ID = 8184235109;
 
         function loginWithTelegram() {
             tg.HapticFeedback.impactOccurred('medium');
             try {
-                const initData = tg.initDataUnsafe;
-                if (initData && initData.user) {
-                    userData = initData.user;
-                    showApp();
-                } else {
-                    tg.showAlert('Please open this Mini App from Telegram.');
-                }
-            } catch(e) {
-                tg.showAlert('Error: ' + e.message);
-            }
+                const d = tg.initDataUnsafe;
+                if (d && d.user) { userData = d.user; showApp(); }
+                else { tg.showAlert('Open from Telegram.'); }
+            } catch(e) { tg.showAlert('Error: ' + e.message); }
         }
-
         function showApp() {
             document.getElementById('page-login').style.display = 'none';
             document.getElementById('appContent').style.display = 'block';
             initApp();
         }
-
-        function getUserId() {
-            if (userData) return userData.id;
-            return null;
-        }
-
         function parseUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            const uid = params.get('user_id');
-            const bal = params.get('balance');
-            const user = tg.initDataUnsafe?.user;
-            if (bal) userBalance = parseFloat(bal);
-            if (uid && !userData) {
-                userData = userData || { id: parseInt(uid), username: params.get('username') || '' };
-            }
+            const p = new URLSearchParams(window.location.search);
+            if (p.get('balance')) userBalance = parseFloat(p.get('balance'));
+            subData = {
+                mini: p.get('mini') || '', full: p.get('full') || '',
+                vless: p.get('vless') || '', vmess: p.get('vmess') || '',
+                trojan: p.get('trojan') || '', ss: p.get('ss') || '',
+                hysteria2: p.get('hysteria2') || '',
+            };
         }
 
-        // Bottom nav
+        function showPage(name) {
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const navItem = document.querySelector('.nav-item[data-page="' + name + '"]');
+            if (navItem) navItem.classList.add('active');
+            document.getElementById('page-' + name).classList.add('active');
+            if (name === 'profile') renderProfile();
+            if (name === 'proxies') renderProxies();
+            if (name === 'tor') renderTor();
+            if (name === 'admin') renderAdmin();
+            tg.HapticFeedback.impactOccurred('light');
+        }
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', () => {
-                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-                item.classList.add('active');
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.getElementById('page-' + item.dataset.page).classList.add('active');
-                if (item.dataset.page === 'profile') renderProfile();
-                tg.HapticFeedback.impactOccurred('light');
-            });
+            item.addEventListener('click', () => showPage(item.dataset.page));
         });
 
         function initApp() {
             parseUrlParams();
-            renderProtocols();
+            renderSubs();
+            renderDirProtos();
+            renderProfile();
             renderFeatures();
             renderProtocolTags();
-            renderProfile();
             updateStatus();
-            loadStartParams();
-        }
-
-        // Auto-login if already authenticated from TG
-        try {
-            const initData = tg.initDataUnsafe;
-            if (initData && initData.user) {
-                userData = initData.user;
-                showApp();
+            if (isAdmin()) {
+                const nav = document.querySelector('.bottom-nav');
+                const btn = document.createElement('button');
+                btn.className = 'nav-item';
+                btn.dataset.page = 'admin';
+                btn.innerHTML = '<span class="icon">\uD83D\uDC64</span><span class="label">Admin</span>';
+                btn.addEventListener('click', () => showPage('admin'));
+                nav.appendChild(btn);
+                if (document.getElementById('page-admin')) {
+                    document.getElementById('page-admin').classList.remove('active');
+                }
+            } else {
+                const ap = document.getElementById('page-admin');
+                if (ap) ap.style.display = 'none';
             }
+        }
+        try {
+            const d = tg.initDataUnsafe;
+            if (d && d.user) { userData = d.user; showApp(); }
         } catch(e) {}
 
-        function renderProtocols() {
-            const grid = document.getElementById('protocolGrid');
-            grid.innerHTML = '';
-            ALL_PROTOCOLS.forEach(p => {
-                const card = document.createElement('div');
-                card.className = 'proto-tile';
-                card.innerHTML = '<div class="emoji">' + p.emoji + '</div><div class="name">' + p.name + '</div><div class="desc">' + p.desc + '</div>';
-                card.onclick = () => selectProtocol(p.id);
-                card.id = 'proto-' + p.id;
-                grid.appendChild(card);
+        // ---- PROTOCOLS PAGE ----
+        function renderSubs() {
+            const c = document.getElementById('subsList');
+            c.innerHTML = '';
+            ['mini','full'].forEach(k => {
+                const url = subData[k] || '';
+                const el = document.createElement('div');
+                el.className = 'sub-card';
+                el.innerHTML = '<div class="sub-icon">' + SUBS[k].emoji + '</div><div class="sub-body"><div class="name">' + SUBS[k].name + '</div><div class="info">' + SUBS[k].desc + '</div></div>';
+                el.onclick = () => showSubDetail(k, url);
+                c.appendChild(el);
             });
         }
-
-        function selectProtocol(id) {
-            selectedProtocol = id;
-            document.querySelectorAll('.proto-tile').forEach(c => c.classList.remove('selected'));
-            const card = document.getElementById('proto-' + id);
-            if (card) card.classList.add('selected');
-            const proto = ALL_PROTOCOLS.find(p => p.id === id);
-            document.getElementById('selectedProtoLabel').textContent = 'Selected: ' + (proto ? proto.name : id);
-            document.getElementById('connectSection').style.display = 'block';
-            if (proto && proto.encrypted) {
-                document.getElementById('encryptKey').textContent = 'Loading...';
-                document.getElementById('encryptCard').style.display = 'block';
-                fetchEncryptKey(id);
+        function renderDirProtos() {
+            const c = document.getElementById('dirProtoList');
+            c.innerHTML = '';
+            Object.keys(DIR_PROTOCOLS).forEach(id => {
+                const p = DIR_PROTOCOLS[id];
+                const el = document.createElement('div');
+                el.className = 'sub-card';
+                el.innerHTML = '<div class="sub-icon">' + p.emoji + '</div><div class="sub-body"><div class="name">' + p.name + '</div><div class="info">Tap for credentials</div></div>';
+                el.onclick = () => showDirProto(id);
+                c.appendChild(el);
+            });
+        }
+        function showSubDetail(k, url) {
+            const s = SUBS[k];
+            let body;
+            if (url) {
+                body = '<p>Status: Active</p><p style="word-break:break-all;background:#111;padding:8px;border-radius:6px;font-size:10px;font-family:monospace;margin:8px 0;">' + url + '</p>' +
+                    '<button class="close-btn" onclick="copyText(\'' + url + '\')">Copy link</button>' +
+                    '<button class="close-btn" style="margin-top:4px;" onclick="tg.openTelegramLink(\'' + url + '\')">Open in HApp</button>';
             } else {
-                document.getElementById('encryptCard').style.display = 'none';
+                body = '<p>Get subscription from bot @AkitaUS</p>';
             }
-            tg.HapticFeedback.impactOccurred('medium');
+            openModal(s.name + ' Subscription', body);
+        }
+        function showDirProto(id) {
+            const p = DIR_PROTOCOLS[id];
+            if (!p) return;
+            if (id === 'l2tp') {
+                openModal('L2TP/IPsec', '<p>Server: <code>' + p.info.server + '</code></p><p>User: <code>' + p.info.user + '</code></p><p>Pass: <code>' + p.info.pass + '</code></p><p>Secret: <code>' + p.info.secret + '</code></p><p style="font-size:10px;color:var(--text2);">Windows: VPN > Workplace > L2TP/IPsec PSK</p>');
+            } else if (id === 'wireguard') {
+                openModal('WireGuard', '<p>' + p.info.note + '</p><p>Contact @AkitaUS in bot to get .conf</p>');
+            } else if (p.servers) {
+                let html = '';
+                p.servers.forEach((s, i) => {
+                    html += '<div class="sub-card" style="cursor:default;margin-bottom:4px;" onclick="showServerDetail(\'' + id + '\',' + i + ')">';
+                    html += '<div class="sub-body"><div class="name">' + s.country + '</div>';
+                    if (s.host) html += '<div class="info">' + s.host + '</div>';
+                    else if (s.file) html += '<div class="info">' + s.file + '</div>';
+                    html += '</div></div>';
+                });
+                openModal(p.name, html);
+            }
+        }
+        function showServerDetail(id, idx) {
+            const p = DIR_PROTOCOLS[id];
+            const s = p.servers[idx];
+            if (!s) return;
+            let html = '<div class="encrypt-card"><div class="title">' + s.country + '</div>';
+            if (s.host) html += '<div class="key">Server: ' + s.host + '</div>';
+            if (s.user) html += '<div class="key">User: ' + s.user + '</div>';
+            if (s.pass) html += '<div class="key">Pass: ' + s.pass + '</div>';
+            if (s.secret) html += '<div class="key">Secret: ' + s.secret + '</div>';
+            if (s.tcp) html += '<div class="key">TCP: ' + s.tcp + '</div>';
+            if (s.udp) html += '<div class="key">UDP: ' + s.udp + '</div>';
+            if (s.file) html += '<div class="key">Config: ' + s.file + '</div>';
+            if (s.note) html += '<div class="key" style="color:var(--text2);margin-top:4px;">' + s.note + '</div>';
+            html += '</div>';
+            if (s.host) {
+                html += '<button class="close-btn" onclick="copyText(\'' + s.host + '\')">Copy server</button>';
+            }
+            openModal(p.name + ' - ' + s.country, html);
         }
 
-        function fetchEncryptKey(protocol) {
-            document.getElementById('encryptKey').textContent = 'happ://crypt5/' + (protocol + '_' + Date.now().toString(36) + Math.random().toString(36).substring(2,8));
-        }
-
-        function connectHApp() {
-            if (!selectedProtocol) return;
-            tg.openTelegramLink(document.getElementById('encryptKey').textContent);
-            tg.HapticFeedback.notificationOccurred('success');
-        }
-
-        function copyEncryptKey() {
-            navigator.clipboard.writeText(document.getElementById('encryptKey').textContent).then(() => showToast('Copied'));
-        }
-
-        function showInstructions() {
-            if (!selectedProtocol) return;
-            const proto = ALL_PROTOCOLS.find(p => p.id === selectedProtocol);
-            const inst = {
-                vless: 'v2rayNG / Nekoray / Hiddify\n1. Copy sub link from Profile\n2. Open app > Add Subscription\n3. Paste > Connect',
-                vmess: 'v2rayNG / Nekobox / Hiddify\n1. Copy sub link\n2. Import > VMess\n3. Connect',
-                trojan: 'Hiddify / Shadowrocket\n1. Copy sub link\n2. Add Trojan config\n3. Connect',
-                ss: 'ShadowSocks / Hiddify\n1. Copy sub link\n2. Import servers\n3. Connect',
-                hysteria2: 'Hiddify / NekoBox\n1. Copy sub link\n2. Add Hysteria2\n3. Connect',
-                awg: 'AmneziaWG\n1. Get .conf from bot\n2. Import > Connect',
-                openvpn: 'OpenVPN Connect\n1. Get .ovpn from bot\n2. Import > Connect',
-                sstp: 'Windows VPN settings\n1. Add SSTP connection\n2. Use credentials from bot',
-                l2tp: 'OS VPN settings\n1. Add L2TP/IPsec\n2. Enter credentials',
-                ssl: 'SoftEther\n1. Add SSL VPN\n2. Connect',
-                splitnet: 'SplitNet app\n1. Import config\n2. Connect',
-                wireguard: 'WireGuard app\n1. Import .conf\n2. Activate'
-            };
-            openModal('Connect ' + (proto ? proto.name : selectedProtocol), '<p style="white-space:pre-line;">' + (inst[selectedProtocol] || 'Use HiddifyNext\n1. Get sub from bot\n2. Add > Connect') + '</p>');
-        }
-
-        function renderFeatures() {
-            const list = document.getElementById('featureComparison');
-            list.innerHTML = '<div class="feature-compare header"><span>Feature</span><span style="text-align:center;">Anix</span></div>';
-            FEATURES.forEach(f => {
-                const row = document.createElement('div');
-                row.className = 'feature-compare';
-                row.innerHTML = '<span>' + f.name + '</span><span style="text-align:center;font-size:12px;color:var(--green);">' + (f.ok ? '\u2713' : '\u2014') + '</span>';
-                list.appendChild(row);
+        // ---- PROXIES PAGE ----
+        function renderProxies() {
+            const c = document.getElementById('proxiesList');
+            c.innerHTML = '';
+            Object.keys(PROXIES).forEach(k => {
+                const p = PROXIES[k];
+                const el = document.createElement('div');
+                el.className = 'sub-card';
+                el.innerHTML = '<div class="sub-icon">' + p.emoji + '</div><div class="sub-body"><div class="name">' + p.name + '</div><div class="info">' + p.desc + '</div></div>';
+                el.onclick = () => { tg.showAlert('Get proxy from bot @AkitaUS via /proxy command'); };
+                c.appendChild(el);
             });
         }
 
-        function renderProtocolTags() {
-            const c = document.getElementById('protocolTags');
-            ALL_PROTOCOLS.forEach(p => {
-                const t = document.createElement('span');
-                t.className = 'tag';
-                t.textContent = p.emoji + ' ' + p.name;
-                c.appendChild(t);
-            });
+        // ---- TOR PAGE ----
+        function renderTor() {
+            const c = document.getElementById('torList');
+            c.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+            fetch('https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt', { mode: 'cors' })
+                .then(r => r.ok ? r.text() : Promise.reject())
+                .then(text => {
+                    const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0, 30);
+                    c.innerHTML = '<p style="font-size:11px;color:var(--text2);margin-bottom:8px;">' + lines.length + ' bridges loaded</p>' +
+                        lines.map(l => '<div class="sub-card" style="cursor:pointer;" onclick="copyText(\'' + l.trim() + '\')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:10px;word-break:break-all;">' + l.trim() + '</div></div></div>').join('');
+                })
+                .catch(() => {
+                    c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Use /tor command in bot @AkitaUS</p>';
+                });
         }
 
-        function updateStatus() {
-            const badge = document.querySelector('.top-bar .status');
-            badge.innerHTML = '<span class="dot"></span>' + (navigator.onLine ? 'Online' : 'Offline');
+        // ---- ADMIN PAGE ----
+        function isAdmin() {
+            return userData && userData.id === ADMIN_ID;
+        }
+        function renderAdmin() {
+            const c = document.getElementById('adminDashboard');
+            if (!isAdmin()) {
+                c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Access denied</p>';
+                return;
+            }
+            const params = new URLSearchParams(window.location.search);
+            const users = params.get('users') || 'N/A';
+            const subs = params.get('subs') || 'N/A';
+            const balance = params.get('balance') || 'N/A';
+
+            c.innerHTML =
+                '<div class="reveal-up"><div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;">' +
+                '<div class="stat-card"><div class="stat-label">Users</div><div class="stat-value" style="font-size:16px;">' + users + '</div></div>' +
+                '<div class="stat-card"><div class="stat-label">Subscriptions</div><div class="stat-value" style="font-size:16px;">' + subs + '</div></div>' +
+                '<div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value" style="font-size:16px;">$' + balance + '</div></div></div></div>' +
+                '<div class="reveal-up" style="animation-delay:0.1s;"><div class="about-card"><div class="a-label">VPN improvement (30 days)</div><div style="margin-top:6px;">' +
+                '<div class="feature-compare"><span>New users</span><span style="text-align:center;color:var(--green);">+47%</span></div>' +
+                '<div class="feature-compare"><span>Traffic (TB)</span><span style="text-align:center;color:var(--green);">+112%</span></div>' +
+                '<div class="feature-compare"><span>Uptime</span><span style="text-align:center;color:var(--green);">99.8%</span></div>' +
+                '<div class="feature-compare"><span>Protocols added</span><span style="text-align:center;color:var(--green);">+3</span></div></div></div></div>' +
+                '<div class="reveal-up" style="animation-delay:0.2s;"><div class="balance-row" style="margin-bottom:0;"><div><div class="label">Actions</div></div><div class="actions">' +
+                '<button onclick="adminBroadcast()">Broadcast</button>' +
+                '<button onclick="adminRefresh()">Refresh</button></div></div></div>';
+        }
+        function adminBroadcast() {
+            tg.sendData(JSON.stringify({ action: 'broadcast', admin: true }));
+            tg.showAlert('Broadcast request sent to bot');
+        }
+        function adminRefresh() {
+            tg.showAlert('Refresh bot data via /stats in @AkitaUS');
         }
 
-        function loadStartParams() {
-            try {
-                if (tg.initDataUnsafe && tg.initDataUnsafe.start_param) {
-                    const p = new URLSearchParams(tg.initDataUnsafe.start_param);
-                    subData = { userId: p.get('user_id') || '', hash: p.get('hash') || '', miniUrl: p.get('mini') || '', fullUrl: p.get('full') || '' };
-                    if (p.get('balance')) userBalance = parseFloat(p.get('balance'));
-                }
-            } catch(e) {}
-        }
-
-        function getInitials(name) { return name ? name.substring(0,2).toUpperCase() : '?'; }
-
+        // ---- PROFILE ----
         function renderProfile() {
             const content = document.getElementById('profileContent');
             const loading = document.getElementById('profileLoading');
-            const userId = userData ? userData.id : (subData ? subData.userId : 'Unknown');
+            const uid = userData ? userData.id : 'Unknown';
             const username = userData ? userData.username : '';
-            const fullName = (userData ? userData.first_name || '' : 'User') + (userData && userData.last_name ? ' ' + userData.last_name : '');
+            const fn = (userData ? userData.first_name || '' : 'User') + (userData && userData.last_name ? ' ' + userData.last_name : '');
+            const photoUrl = userData && userData.photo_url ? userData.photo_url : null;
 
             loading.style.display = 'none';
             content.style.display = 'block';
@@ -773,32 +882,28 @@
             const trafficUsed = (Math.random() * 100 + 10).toFixed(1);
             const trafficPct = (Math.random() * 15 + 1).toFixed(1);
 
+            const avatar = photoUrl
+                ? '<img src="' + photoUrl + '" alt="avatar">'
+                : getInitials(fn);
+
             content.innerHTML =
-                '<div class="reveal-up"><div class="profile-header"><div class="profile-avatar">' + getInitials(fullName) + '</div><div class="profile-info"><h2>' + (fullName || 'Anonymous') + '</h2><div class="uid">' + (username ? '@' + username : 'ID: ' + userId) + '</div></div></div></div>' +
+                '<div class="reveal-up"><div class="profile-header"><div class="profile-avatar">' + avatar + '</div><div class="profile-info"><h2>' + (fn || 'Anonymous') + '</h2><div class="uid">' + (username ? '@' + username : 'ID: ' + uid) + '</div></div></div></div>' +
                 '<div class="reveal-up" style="animation-delay:0.05s;"><div class="balance-row"><div><div class="label">Balance</div><div class="amount">$' + userBalance.toFixed(2) + '</div></div><div class="actions"><button onclick="showTopUp()">Top Up</button><button onclick="showHistory()">History</button></div></div></div>' +
                 '<div class="reveal-up" style="animation-delay:0.1s;"><div class="stat-grid"><div class="stat-card"><div class="stat-label">Traffic Used</div><div class="stat-value">' + trafficUsed + '</div><div class="stat-sub">of 10,240 GB</div><div class="traffic-bar"><div class="fill" style="width:' + trafficPct + '%"></div></div></div><div class="stat-card"><div class="stat-label">Subscription</div><div class="stat-value">Active</div><div class="stat-sub">until Dec 2027</div></div></div></div>' +
                 '<div style="margin-top:4px;"><div class="section-title">Subscriptions</div>' +
-                '<div class="sub-card" onclick="showSubDetail(\'mini\')"><div class="sub-icon">\uD83D\uDCF1</div><div class="sub-body"><div class="name">Mini</div><div class="info">All protocols</div></div></div>' +
-                '<div class="sub-card" onclick="showSubDetail(\'full\')"><div class="sub-icon">\uD83D\uDE80</div><div class="sub-body"><div class="name">Full</div><div class="info">VLESS, 100+ servers</div></div></div></div>';
+                '<div class="sub-card" onclick="showSubDetail(\'mini\', subData.mini)"><div class="sub-icon">\uD83D\uDCF1</div><div class="sub-body"><div class="name">Mini</div><div class="info">' + (subData.mini ? 'Tap to copy' : 'Get from bot') + '</div></div></div>' +
+                '<div class="sub-card" onclick="showSubDetail(\'full\', subData.full)"><div class="sub-icon">\uD83D\uDE80</div><div class="sub-body"><div class="name">Full</div><div class="info">' + (subData.full ? 'Tap to copy' : 'Get from bot') + '</div></div></div></div>';
         }
 
         function showTopUp() {
+            const c = document.getElementById('modalBody');
             document.getElementById('modalTitle').textContent = 'Top Up';
-            document.getElementById('modalBody').innerHTML =
-                '<p style="margin-bottom:10px;">Choose amount:</p>' +
+            c.innerHTML = '<p style="margin-bottom:10px;">Choose amount:</p>' +
                 '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">' +
-                [5,10,25,50].map(a => '<button style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;" onclick="selectTopUp(' + a + ')">$' + a + '</button>').join('') +
-                '</div><p style="font-size:10px;color:var(--text2);">Contact @AkitaUS to complete payment</p>';
+                [5,10,25,50].map(a => '<button style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;cursor:pointer;" onclick="closeModal();showToast(\'Selected $' + a + '\')">$' + a + '</button>').join('') +
+                '</div><p style="font-size:10px;color:var(--text2);">Contact @AkitaUS to complete</p>';
             document.getElementById('modalOverlay').classList.add('show');
         }
-
-        function selectTopUp(a) {
-            closeModal();
-            document.getElementById('modalTitle').textContent = 'Top Up $' + a;
-            document.getElementById('modalBody').innerHTML = '<p>Selected <strong>$' + a + '</strong> top-up.</p><p>Contact @AkitaUS to complete.</p><p style="font-size:10px;color:var(--text2);">ID: ' + (userData ? userData.id : 'Unknown') + '</p>';
-            document.getElementById('modalOverlay').classList.add('show');
-        }
-
         function showHistory() {
             document.getElementById('modalTitle').textContent = 'History';
             document.getElementById('modalBody').innerHTML =
@@ -808,20 +913,48 @@
             document.getElementById('modalOverlay').classList.add('show');
         }
 
-        function showSubDetail(type) {
-            document.getElementById('modalTitle').textContent = (type === 'mini' ? 'Mini' : 'Full') + ' Subscription';
-            document.getElementById('modalBody').innerHTML = '<p>Status: Active</p><p>Expires: Dec 31, 2027</p><p>Open link in your VPN client to import.</p>';
-            document.getElementById('modalOverlay').classList.add('show');
+        // ---- ABOUT ----
+        function renderFeatures() {
+            const list = document.getElementById('featureComparison');
+            const features = [
+                'Bypass whitelist blocks','All protocols in one','Highest speed & low ping','Deep DPI bypass',
+                'Traffic encryption','Auto-update configs','Free trial','No logs policy','24/7 support','HApp one-click'
+            ];
+            list.innerHTML = '<div class="feature-compare header"><span>Feature</span><span style="text-align:center;">Anix</span></div>';
+            features.forEach(f => {
+                const row = document.createElement('div');
+                row.className = 'feature-compare';
+                row.innerHTML = '<span>' + f + '</span><span style="text-align:center;font-size:12px;color:var(--green);">\u2713</span>';
+                list.appendChild(row);
+            });
+        }
+        function renderProtocolTags() {
+            const c = document.getElementById('protocolTags');
+            const all = { ...SUBS };
+            Object.keys(DIR_PROTOCOLS).forEach(k => { all[k] = { name: DIR_PROTOCOLS[k].name, emoji: DIR_PROTOCOLS[k].emoji }; });
+            Object.keys(all).forEach(k => {
+                const t = document.createElement('span');
+                t.className = 'tag';
+                t.textContent = all[k].emoji + ' ' + all[k].name;
+                c.appendChild(t);
+            });
+        }
+        function updateStatus() {
+            const badge = document.querySelector('.top-bar .status');
+            if (badge) badge.innerHTML = '<span class="dot"></span>' + (navigator.onLine ? 'Online' : 'Offline');
         }
 
+        // ---- UTILS ----
+        function getInitials(name) { return name ? name.substring(0,2).toUpperCase() : '?'; }
+        function copyText(t) {
+            navigator.clipboard.writeText(t).then(() => showToast('Copied'));
+        }
         function openModal(title, body) {
             document.getElementById('modalTitle').textContent = title;
             document.getElementById('modalBody').innerHTML = body;
             document.getElementById('modalOverlay').classList.add('show');
         }
-
         function closeModal() { document.getElementById('modalOverlay').classList.remove('show'); }
-
         function showToast(msg) {
             const t = document.createElement('div');
             t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#ccc;padding:8px 20px;border-radius:8px;font-size:12px;z-index:300;border:1px solid #262626;animation:revealUp 0.25s ease;';
@@ -829,11 +962,8 @@
             document.body.appendChild(t);
             setTimeout(() => t.remove(), 1200);
         }
-
         document.getElementById('modalOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
-
-        init();
     </script>
 </body>
 </html>
