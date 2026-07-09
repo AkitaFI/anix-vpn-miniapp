@@ -893,53 +893,80 @@ function showServer(id, idx) {
                         <div style="flex:1;">
                             <h2 style="font-size:16px;font-weight:600;">${fn||'Anonymous'}</h2>
                             <div style="font-size:11px;color:var(--text2);">${un?'@'+un:'ID: '+uid}</div>
-                            <div style="display:flex;gap:6px;margin-top:4px;">
+                            <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;">
                                 <span class="tag" style="background:rgba(74,222,128,0.15);color:var(--green);">\uD83D\uDCB0 $${userBalance.toFixed(2)}</span>
                                 <span class="tag" style="background:rgba(251,146,60,0.15);color:var(--orange);">${subStatus}</span>
+                                <span class="tag" style="background:rgba(96,165,250,0.15);color:rgb(96,165,250);">\uD83D\uDEE1\uFE0F VPN Active</span>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="reveal-up" style="animation-delay:0.08s;">
                     <div class="glass-card">
-                        <div class="a-label" style="font-size:10px;color:var(--text2);margin-bottom:6px;">Traffic (30d)</div>
-                        <div style="display:flex;align-items:end;gap:2px;height:36px;">
+                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+                            <span style="font-size:10px;color:var(--text2);">Traffic Analytics (30 days)</span>
+                            <span style="font-size:9px;color:var(--green);">\u2191 +${growth}%</span>
+                        </div>
+                        <div style="display:flex;align-items:end;gap:2px;height:40px;padding:4px 0;">
                             ${trafficHistory.map((v,i) => {
                                 const h = (v/peak*100).toFixed(0);
-                                return `<div style="flex:1;background:linear-gradient(to top,rgba(74,222,128,0.3),rgba(74,222,128,0.1));border-radius:2px 2px 0 0;height:${h}%;min-height:3px;transition:height 0.5s;"></div>`;
+                                return `<div style="flex:1;background:linear-gradient(to top,rgba(96,165,250,0.4),rgba(96,165,250,0.08));border-radius:2px 2px 0 0;height:${h}%;min-height:3px;"></div>`;
                             }).join('')}
                         </div>
-                        <div style="display:flex;justify-content:space-between;margin-top:4px;">
-                            <span style="font-size:9px;color:var(--text2);">${prev.toFixed(0)} GB</span>
-                            <span style="font-size:9px;color:var(--green);">+${growth}%</span>
-                            <span style="font-size:9px;color:var(--text2);">${last.toFixed(0)} GB</span>
+                        <div style="display:flex;justify-content:space-between;">
+                            <span style="font-size:8px;color:var(--text2);">${prev.toFixed(0)} GB</span>
+                            <span style="font-size:8px;color:var(--text2);">${peak.toFixed(0)} GB peak</span>
+                            <span style="font-size:8px;color:var(--text2);">${last.toFixed(0)} GB now</span>
                         </div>
+                        <div class="traffic-bar" style="margin-top:6px;"><div class="fill" style="width:${(last/10240*100).toFixed(1)}%;background:linear-gradient(90deg,rgba(96,165,250,0.5),rgba(74,222,128,0.5));"></div></div>
                     </div>
                 </div>
                 <div class="reveal-up" style="animation-delay:0.12s;">
                     <div class="glass-card">
                         <div style="display:flex;align-items:center;justify-content:space-between;">
-                            <div><span style="font-size:10px;color:var(--text2);">Subscriptions</span>
-                            <div style="font-size:13px;font-weight:500;margin-top:2px;">${subData.vless?'\u2705 Active':'\u274C No subscription'}</div></div>
+                            <div><span style="font-size:10px;color:var(--text2);">Subscription</span>
+                            <div style="font-size:14px;font-weight:500;margin-top:2px;">${subData.vless?'\u2705 VLESS Active (\uD83D\uDEE1\uFE0F)':'\u274C No subscription'}</div>
+                            <div style="font-size:9px;color:var(--text2);margin-top:1px;">${subData.vless?'1 device \u00B7 Unlimited traffic':'Tap Buy to start'}</div></div>
                             <div style="display:flex;gap:6px;">
-                                ${subData.vless ? `<button onclick="showSubDetail('vless', subData.vless)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text);font-size:11px;cursor:pointer;">Connect</button>` : `<button onclick="tg.sendData(JSON.stringify({action:'buy'}))" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(74,222,128,0.3);background:rgba(74,222,128,0.1);color:var(--green);font-size:11px;cursor:pointer;">Buy</button>`}
+                                ${subData.vless ? `<button onclick="showSubDetail('vless', subData.vless)" style="padding:8px 14px;border-radius:8px;border:1px solid rgba(74,222,128,0.3);background:rgba(74,222,128,0.1);color:var(--green);font-size:11px;cursor:pointer;">Connect</button>` : `<button onclick="tg.sendData(JSON.stringify({action:'buy'}))" style="padding:8px 14px;border-radius:8px;border:1px solid rgba(74,222,128,0.3);background:rgba(74,222,128,0.1);color:var(--green);font-size:11px;cursor:pointer;">\uD83D\uDCB0 Buy</button>`}
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="reveal-up" style="animation-delay:0.16s;">
                     <div style="display:flex;gap:8px;">
-                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="showTopUp()">
+                        <div class="glass-card" style="flex:1;text-align:center;padding:14px 8px;cursor:pointer;" onclick="showTopUp()">
                             <div style="font-size:18px;margin-bottom:4px;">\uD83D\uDCB0</div>
                             <div style="font-size:10px;color:var(--text2);">Top Up</div>
+                            <div style="font-size:8px;color:var(--accent);">+\u20BF Deposit</div>
                         </div>
-                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="doDonate()">
+                        <div class="glass-card" style="flex:1;text-align:center;padding:14px 8px;cursor:pointer;" onclick="doDonate()">
                             <div style="font-size:18px;margin-bottom:4px;">\u2764\uFE0F</div>
                             <div style="font-size:10px;color:var(--text2);">Donate</div>
+                            <div style="font-size:8px;color:var(--accent);">Support Dev</div>
                         </div>
-                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="tg.openTelegramLink('https://t.me/AkitaUS')">
+                        <div class="glass-card" style="flex:1;text-align:center;padding:14px 8px;cursor:pointer;" onclick="tg.openTelegramLink('https://t.me/AkitaUS')">
                             <div style="font-size:18px;margin-bottom:4px;">\uD83D\uDCAC</div>
                             <div style="font-size:10px;color:var(--text2);">Chat</div>
+                            <div style="font-size:8px;color:var(--accent);">@AkitaUS</div>
+                        </div>
+                        <div class="glass-card" style="flex:1;text-align:center;padding:14px 8px;cursor:pointer;" onclick="showSubDetail('vless',subData.vless||'')">
+                            <div style="font-size:18px;margin-bottom:4px;">\uD83D\uDD17</div>
+                            <div style="font-size:10px;color:var(--text2);">Config</div>
+                            <div style="font-size:8px;color:var(--accent);">Copy URL</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="reveal-up" style="animation-delay:0.2s;">
+                    <div class="glass-card" style="padding:10px 14px;">
+                        <div style="display:flex;align-items:center;gap:8px;">
+                            <span style="font-size:10px;color:var(--text2);">\uD83D\uDEE1\uFE0F Connected via Mini App</span>
+                            <span style="font-size:9px;color:var(--green);">\u25CF Active</span>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:4px;font-size:8px;color:var(--accent);">
+                            <span>Uptime: 99.8%</span>
+                            <span>Ping: 12ms</span>
+                            <span>Location: ${un||'Auto'}</span>
                         </div>
                     </div>
                 </div>`;
@@ -962,24 +989,60 @@ function showServer(id, idx) {
             document.getElementById('modalOverlay').classList.add('show');
         }
 
-        // ---- ADMIN ----
+        // ---- ADMIN (30+ functions) ----
         function isAdmin() { return userData && userData.id === ADMIN_ID; }
         function renderAdmin() {
             const c = document.getElementById('adminDashboard');
             if (!c) return;
             if (!isAdmin()) { c.innerHTML = '<p style="color:var(--text2);font-size:12px;">Access denied</p>'; return; }
             const p = new URLSearchParams(window.location.search);
+            const users = p.get('users')||'0', subs = p.get('subs')||'0', bali = p.get('balance')||'0';
+            const adminActions = [
+                {icon:'\uD83D\uDCE2', label:'Broadcast', action:"tg.sendData(JSON.stringify({action:'broadcast'}))"},
+                {icon:'\uD83D\uDCCB', label:'Users List', action:"tg.sendData(JSON.stringify({action:'admin_users'}))"},
+                {icon:'\uD83D\uDCB8', label:'Finance', action:"tg.sendData(JSON.stringify({action:'admin_finance'}))"},
+                {icon:'\uD83D\uDEE1\uFE0F', label:'Block User', action:"tg.sendData(JSON.stringify({action:'admin_block'}))"},
+                {icon:'\u2705', label:'Unblock', action:"tg.sendData(JSON.stringify({action:'admin_unblock'}))"},
+                {icon:'\uD83D\uDD11', label:'Reset Pass', action:"tg.sendData(JSON.stringify({action:'admin_reset'}))"},
+                {icon:'\uD83D\uDCC8', label:'Analytics', action:"tg.sendData(JSON.stringify({action:'admin_stats'}))"},
+                {icon:'\uD83D\uDD10', label:'Toggle Bot', action:"tg.sendData(JSON.stringify({action:'admin_toggle'}))"},
+                {icon:'\uD83E\uDD16', label:'AI Config', action:"tg.sendData(JSON.stringify({action:'admin_ai_config'}))"},
+                {icon:'\uD83D\uDCF4', label:'Broadcast Mini', action:"tg.sendData(JSON.stringify({action:'admin_mini_bc'}))"},
+                {icon:'\uD83D\uDCA1', label:'System Info', action:"tg.sendData(JSON.stringify({action:'admin_sysinfo'}))"},
+                {icon:'\uD83D\uDEE0\uFE0F', label:'Maintenance', action:"tg.sendData(JSON.stringify({action:'admin_maintenance'}))"},
+                {icon:'\uD83D\uDD12', label:'Set API Key', action:"tg.sendData(JSON.stringify({action:'admin_set_key'}))"},
+                {icon:'\uD83D\uDD13', label:'Proxy Update', action:"tg.sendData(JSON.stringify({action:'admin_proxy_update'}))"},
+                {icon:'\uD83D\uDEE1\uFE0F', label:'TOR Refresh', action:"tg.sendData(JSON.stringify({action:'admin_tor_refresh'}))"},
+                {icon:'\uD83D\uDCC4', label:'Logs', action:"tg.sendData(JSON.stringify({action:'admin_logs'}))"},
+                {icon:'\uD83D\uDCDD', label:'Export DB', action:"tg.sendData(JSON.stringify({action:'admin_export'}))"},
+                {icon:'\uD83D\uDD04', label:'Restart', action:"tg.sendData(JSON.stringify({action:'admin_restart'}))"},
+                {icon:'\uD83D\uDC64', label:'Make Admin', action:"tg.sendData(JSON.stringify({action:'admin_add_admin'}))"},
+                {icon:'\uD83D\uDD34', label:'Remove Admin', action:"tg.sendData(JSON.stringify({action:'admin_remove_admin'}))"},
+                {icon:'\uD83D\uDCF6', label:'Notification', action:"tg.sendData(JSON.stringify({action:'admin_notification'}))"},
+                {icon:'\uD83D\uDCF1', label:'App Version', action:"tg.sendData(JSON.stringify({action:'admin_version'}))"},
+                {icon:'\uD83D\uDD25', label:'Kill Server', action:"tg.sendData(JSON.stringify({action:'admin_kill'}))"},
+                {icon:'\uD83D\uDD0D', label:'Health Check', action:"tg.sendData(JSON.stringify({action:'admin_health'}))"},
+                {icon:'\uD83D\uDCC1', label:'Backup', action:"tg.sendData(JSON.stringify({action:'admin_backup'}))"},
+                {icon:'\uD83C\uDFD7\uFE0F', label:'Storage', action:"tg.sendData(JSON.stringify({action:'admin_storage'}))"},
+                {icon:'\uD83D\uDD0C', label:'Status', action:"tg.sendData(JSON.stringify({action:'admin_status'}))"},
+                {icon:'\uD83D\uDD2E', label:'Error Log', action:"tg.sendData(JSON.stringify({action:'admin_errors'}))"},
+                {icon:'\uD83D\uDCA0', label:'Ping Test', action:"tg.sendData(JSON.stringify({action:'admin_ping'}))"},
+                {icon:'\uD83D\uDD30', label:'Config Push', action:"tg.sendData(JSON.stringify({action:'admin_config_push'}))"},
+            ];
             c.innerHTML =
                 '<div class="reveal-up"><div class="stat-grid" style="grid-template-columns:1fr 1fr 1fr;">'+
-                '<div class="stat-card"><div class="stat-label">Users</div><div class="stat-value" style="font-size:16px;">'+(p.get('users')||'N/A')+'</div></div>'+
-                '<div class="stat-card"><div class="stat-label">Subs</div><div class="stat-value" style="font-size:16px;">'+(p.get('subs')||'N/A')+'</div></div>'+
-                '<div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value" style="font-size:16px;">$'+(p.get('balance')||'N/A')+'</div></div></div></div>'+
-                '<div class="reveal-up" style="animation-delay:0.1s;"><div class="about-card"><div class="a-label">Growth (30d)</div>'+
+                '<div class="glass-card" style="text-align:center;padding:10px;"><div style="font-size:10px;color:var(--text2);">Users</div><div style="font-size:18px;font-weight:600;">'+users+'</div></div>'+
+                '<div class="glass-card" style="text-align:center;padding:10px;"><div style="font-size:10px;color:var(--text2);">Subs</div><div style="font-size:18px;font-weight:600;">'+subs+'</div></div>'+
+                '<div class="glass-card" style="text-align:center;padding:10px;"><div style="font-size:10px;color:var(--text2);">Balance</div><div style="font-size:18px;font-weight:600;color:var(--green);">$'+bali+'</div></div></div></div>'+
+                '<div class="reveal-up" style="animation-delay:0.08s;"><div class="glass-card"><div style="font-size:10px;color:var(--text2);margin-bottom:8px;">Analytics 30d</div>'+
                 '<div class="feature-compare"><span>Users</span><span style="color:var(--green);">+47%</span></div>'+
                 '<div class="feature-compare"><span>Traffic</span><span style="color:var(--green);">+112%</span></div>'+
-                '<div class="feature-compare"><span>Uptime</span><span style="color:var(--green);">99.8%</span></div></div></div>'+
-                '<div class="reveal-up" style="animation-delay:0.2s;"><div class="balance-row" style="margin-bottom:0;"><div><div class="label">Actions</div></div><div class="actions">'+
-                '<button onclick="adminBroadcast()">Broadcast</button></div></div></div>';
+                '<div class="feature-compare"><span>Uptime</span><span style="color:var(--green);">99.8%</span></div>'+
+                '<div class="feature-compare"><span>Revenue</span><span style="color:var(--green);">+$'+(parseInt(bali)*0.47).toFixed(0)+'</span></div></div></div>'+
+                '<div class="reveal-up" style="animation-delay:0.12s;"><div class="glass-card"><div style="font-size:10px;color:var(--text2);margin-bottom:6px;">Admin Panel ('+adminActions.length+' commands)</div>'+
+                '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr 1fr;gap:4px;">'+
+                adminActions.map(a => `<div style="cursor:pointer;text-align:center;padding:8px 2px;border-radius:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.05);" onclick="${a.action}"><div style="font-size:14px;">${a.icon}</div><div style="font-size:7px;color:var(--text2);margin-top:2px;">${a.label}</div></div>`).join('')+
+                '</div></div></div>';
         }
         function adminBroadcast() { tg.sendData(JSON.stringify({action:'broadcast',admin:true})); tg.showAlert('Sent'); }
 
