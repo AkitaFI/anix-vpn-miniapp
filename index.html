@@ -278,6 +278,16 @@
             border-color: var(--accent);
             background: rgba(255,255,255,0.03);
         }
+        .main-btn {
+            flex:1; padding:16px 8px; border-radius:14px; border:1px solid var(--border);
+            font-size:14px; font-weight:600; cursor:pointer; color:var(--text);
+            background:var(--card); transition:0.2s;
+        }
+        .main-btn:active { transform:scale(0.96); }
+        .main-btn.active { border-color:var(--accent); background:var(--card2); }
+        .vpn-btn { border-left:3px solid #4ade80; }
+        .proxy-btn { border-left:3px solid #fb923c; }
+        .tor-btn { border-left:3px solid #a78bfa; }
 
         /* Connect */
         .connect-actions { margin-top: 8px; }
@@ -435,6 +445,28 @@
             font-size: 11px;
             border: 1px solid var(--border);
         }
+        .glass {
+            background: rgba(255,255,255,0.04);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.03);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+        }
+        .logo-icon {
+            width: 28px; height: 28px; border-radius: 8px;
+            background: linear-gradient(135deg, #4ade80, #22d3ee);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 700; color: #000; margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -451,8 +483,11 @@
 
     <!-- App Content (hidden until login) -->
     <div id="appContent" style="display:none;">
-        <div class="top-bar">
-            <h1>Anix VPN</h1>
+        <div class="top-bar" style="background:rgba(0,0,0,0.7);backdrop-filter:blur(24px);">
+            <div style="display:flex;align-items:center;">
+                <div class="logo-icon">A</div>
+                <h1>Anix VPN</h1>
+            </div>
             <span class="status"><span class="dot"></span>Online</span>
         </div>
 
@@ -465,12 +500,12 @@
 
             <!-- Home Page (VPN + Proxies + TOR) -->
             <div class="page" id="page-home">
-                <p style="font-size:11px;color:var(--text2);margin-bottom:8px;">VPN Protocols</p>
-                <div id="homeProtocols"></div>
-                <p style="font-size:11px;color:var(--text2);margin:14px 0 8px;">Proxies</p>
-                <div id="homeProxies"></div>
-                <p style="font-size:11px;color:var(--text2);margin:14px 0 8px;">Tor Bridges</p>
-                <div id="homeTor"></div>
+                <div id="homeMainButtons" style="display:flex;gap:8px;margin-bottom:12px;">
+                    <button class="main-btn vpn-btn" onclick="showHomeSection('vpn')">\uD83D\uDD10 VPN</button>
+                    <button class="main-btn proxy-btn" onclick="showHomeSection('proxy')">\uD83D\uDEE1\uFE0F Proxy</button>
+                    <button class="main-btn tor-btn" onclick="showHomeSection('tor')">\uD83E\uDDEA TOR</button>
+                </div>
+                <div id="homeContent"></div>
             </div>
 
             <!-- Admin Page (hidden unless admin) -->
@@ -521,6 +556,15 @@
                         <a href="https://t.me/AnixSecVPN" class="link-btn">Channel</a>
                     </div>
                 </div>
+                <div class="about-card">
+                    <div class="a-label">AI Assistant</div>
+                    <p style="font-size:10px;color:var(--text2);margin:4px 0;">Ask anything about VPN, setup, troubleshooting</p>
+                    <div style="display:flex;gap:6px;margin-top:6px;">
+                        <input id="aiQueryInput" type="text" placeholder="Type a question..." style="flex:1;padding:8px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:12px;outline:none;">
+                        <button class="close-btn" onclick="sendAIQuery()">Send</button>
+                    </div>
+                    <div id="aiResponse" style="margin-top:6px;font-size:11px;color:var(--text2);"></div>
+                </div>
             </div>
         </div>
 
@@ -559,13 +603,9 @@
         const ADMIN_ID = 8184235109;
         const BASE = 'https://raw.githubusercontent.com/AkitaFI/anix-vpn-miniapp/main/configs/';
         const ALL_PROTO = [
-            { id:'mini', name:'Mini', emoji:'\uD83D\uDCF1', sub:true },
-            { id:'full', name:'Full', emoji:'\uD83D\uDE80', sub:true },
             { id:'vless', name:'VLESS', emoji:'\uD83D\uDD17', sub:true },
-            { id:'vmess', name:'VMess', emoji:'\uD83D\uDD17', sub:true },
-            { id:'trojan', name:'Trojan', emoji:'\uD83D\uDEE1\uFE0F', sub:true },
-            { id:'ss', name:'ShadowSocks', emoji:'\uD83D\uDD12', sub:true },
-            { id:'hysteria2', name:'Hysteria2', emoji:'\u26A1', sub:true },
+            { id:'hysteria2', name:'Hysteria2', emoji:'\u26A1', sub:false },
+            { id:'ss', name:'ShadowSocks', emoji:'\uD83D\uDD12', sub:false },
             { id:'sstp', name:'SSTP', emoji:'\uD83D\uDD10', sub:false },
             { id:'openvpn', name:'OpenVPN', emoji:'\uD83D\uDD11', sub:false },
             { id:'l2tp', name:'L2TP', emoji:'\uD83D\uDD12', sub:false },
@@ -610,6 +650,14 @@
             wireguard: [{ c:'', n:'Contact @AkitaUS in bot', single:true }],
         };
 
+        function sendAIQuery() {
+            const inp = document.getElementById('aiQueryInput');
+            const q = inp.value.trim();
+            if (!q) return;
+            document.getElementById('aiResponse').innerHTML = '\u23F3 Thinking...';
+            tg.sendData(JSON.stringify({action:'ai_query', query:q}));
+            inp.value = '';
+        }
         function loginWithTelegram() {
             tg.HapticFeedback.impactOccurred('medium');
             try { const d = tg.initDataUnsafe;
@@ -621,12 +669,14 @@
             document.getElementById('page-login').style.display = 'none';
             document.getElementById('appContent').style.display = 'block';
             initApp();
+            showPage('profile');
         }
         function parseUrlParams() {
             const p = new URLSearchParams(window.location.search);
             if (p.get('balance')) userBalance = parseFloat(p.get('balance'));
             subData = {};
             ['mini','full','vless','vmess','trojan','ss','hysteria2'].forEach(k => { subData[k] = p.get(k) || ''; });
+            window.adminStats = { users: p.get('users'), subs: p.get('subs'), balance: p.get('balance') };
         }
 
         function showPage(name) {
@@ -666,73 +716,112 @@
         } catch(e) {}
 
         // ---- HOME ----
+        let currentSection = 'vpn';
+        function showHomeSection(section) {
+            currentSection = section;
+            document.querySelectorAll('.main-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.querySelector(`.main-btn[onclick*="${section}"]`);
+            if (btn) btn.classList.add('active');
+
+            const c = document.getElementById('homeContent');
+            if (section === 'vpn') renderVPNSection(c);
+            else if (section === 'proxy') renderProxySection(c);
+            else if (section === 'tor') renderTorSection(c);
+            tg.HapticFeedback.impactOccurred('light');
+        }
+
         function renderHome() {
-            const hp = document.getElementById('homeProtocols');
-            hp.innerHTML = '';
-            const grid = document.createElement('div');
-            grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;';
-            ALL_PROTO.forEach(p => {
-                const t = document.createElement('div');
-                t.className = 'proto-tile';
-                t.innerHTML = '<div class="emoji">'+p.emoji+'</div><div class="name">'+p.name+'</div>';
-                t.onclick = () => clickProto(p.id);
-                grid.appendChild(t);
-            });
-            hp.appendChild(grid);
+            showHomeSection('vpn');
+        }
 
-            // Proxies
-            const hpx = document.getElementById('homeProxies');
-            hpx.innerHTML = '';
-            const prow = document.createElement('div');
-            prow.style.cssText = 'display:flex;gap:6px;';
-            PROXIES.forEach(p => {
-                const b = document.createElement('button');
-                b.style.cssText = 'flex:1;padding:10px 6px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:10px;font-weight:500;cursor:pointer;';
-                b.innerHTML = p.emoji+' '+p.name;
-                b.onclick = () => tg.showAlert('Use /proxy in bot @AkitaUS');
-                prow.appendChild(b);
+        function renderVPNSection(c) {
+            const subIds = ['vless'];
+            const dirIds = ['hysteria2','ss','sstp','openvpn','l2tp','ssl','splitnet','awg','wireguard'];
+            const names = {vless:'VLESS',
+                hysteria2:'Hysteria2',ss:'ShadowSocks',sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP',ssl:'SSL VPN',splitnet:'SplitNet',awg:'AmneziaWG',wireguard:'WireGuard'};
+            const emojis = {vless:'🔗',
+                hysteria2:'⚡',ss:'🔒',sstp:'🔐',openvpn:'🔑',l2tp:'🔒',ssl:'🔏',splitnet:'🌐',awg:'🛡️',wireguard:'🔵'};
+            let html = '<p style="font-size:11px;color:var(--text2);margin-bottom:6px;">Subscriptions</p><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
+            subIds.forEach(id => {
+                const url = subData[id] || '';
+                html += `<div class="proto-tile" onclick="${url ? `showSubDetail('${id}','${url.replace(/'/g,"\\'")}')` : `tg.sendData(JSON.stringify({action:'buy'}))`}"><div class="emoji">${emojis[id]}</div><div class="name">${names[id]}</div></div>`;
             });
-            hpx.appendChild(prow);
+            html += '</div><p style="font-size:11px;color:var(--text2);margin:12px 0 6px;">Direct</p><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">';
+            dirIds.forEach(id => {
+                html += `<div class="proto-tile" onclick="showDirProto('${id}')"><div class="emoji">${emojis[id]}</div><div class="name">${names[id]}</div></div>`;
+            });
+            html += '</div>';
+            c.innerHTML = `<div class="reveal-up">${html}</div>`;
+        }
 
-            // TOR
-            const ht = document.getElementById('homeTor');
-            ht.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        function renderProxySection(c) {
+            c.innerHTML = `<div class="reveal-up">
+            <p style="font-size:11px;color:var(--text2);margin-bottom:6px;">Proxies</p>
+            <div class="proxy-list" style="display:flex;flex-direction:column;gap:6px;">
+                <div class="sub-card" style="cursor:pointer;padding:12px;" onclick="connectProxy('tg')">
+                    <div class="sub-body"><div class="name">📱 TG Proxy</div><div class="info" style="font-size:10px;">Connect via Telegram</div></div>
+                </div>
+                <div class="sub-card" style="cursor:pointer;padding:12px;" onclick="connectProxy('white')">
+                    <div class="sub-body"><div class="name">🛡️ White Proxy</div><div class="info" style="font-size:10px;">WireGuard-based proxy</div></div>
+                </div>
+                <div class="sub-card" style="cursor:pointer;padding:12px;" onclick="connectProxy('socks5')">
+                    <div class="sub-body"><div class="name">🧦 Socks5</div><div class="info" style="font-size:10px;">SOCKS5 proxy</div></div>
+                </div>
+                <div class="sub-card" style="cursor:pointer;padding:12px;" onclick="connectProxy('dns')">
+                    <div class="sub-body"><div class="name">🌐 DNS</div><div class="info" style="font-size:10px;">DNS proxy</div></div>
+                </div>
+            </div>
+            </div>`;
+        }
+
+        function connectProxy(type) {
+            if (type === 'tg') {
+                tg.openProxy && tg.openProxy('85.23.9.73', 1080, '9d5c1f9476e1dbb7c1c6e0b5c3d4e5f6');
+            } else if (type === 'white') {
+                tg.sendData(JSON.stringify({action:'download_file',file:'StarLink.conf'}));
+            } else if (type === 'socks5') {
+                openModal('Socks5', '<div class="encrypt-card"><div class="title">Socks5 Proxy</div><div class="key">Host: 85.23.9.73</div><div class="key">Port: 1080</div><div class="key">User: proxy</div><div class="key">Pass: proxy123</div></div><button class="close-btn" onclick="copyText(\'85.23.9.73:1080\')">Copy</button>');
+            } else if (type === 'dns') {
+                openModal('DNS', '<div class="encrypt-card"><div class="title">DNS Servers</div><div class="key">Primary: 94.140.14.14</div><div class="key">Secondary: 94.140.15.15</div></div><button class="close-btn" onclick="copyText(\'94.140.14.14\')">Copy DNS</button>');
+            }
+            tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function renderTorSection(c) {
+            c.innerHTML = '<div class="reveal-up"><p style="font-size:11px;color:var(--text2);margin-bottom:6px;">TOR Bridges</p><div class="loading"><div class="spinner"></div></div></div>';
             fetch('https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt', {mode:'cors'})
                 .then(r => r.ok ? r.text() : Promise.reject())
                 .then(text => {
                     const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0,20);
-                    ht.innerHTML = lines.map(l =>
+                    const html = lines.map(l =>
                         `<div class="sub-card" style="cursor:pointer;padding:8px 12px;" onclick="copyText('${l.trim()}')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:9px;word-break:break-all;">${l.trim()}</div></div></div>`
                     ).join('');
+                    document.getElementById('homeContent').innerHTML = `<div class="reveal-up"><p style="font-size:11px;color:var(--text2);margin-bottom:6px;">TOR Bridges</p>${html}</div>`;
                 })
-                .catch(() => { ht.innerHTML = '<p style="color:var(--text2);font-size:11px;">Use /tor in bot @AkitaUS</p>'; });
+                .catch(() => { document.getElementById('homeContent').innerHTML = '<div class="reveal-up"><p style="font-size:11px;color:var(--text2);margin-bottom:6px;">TOR Bridges</p><p style="color:var(--text2);font-size:11px;">Use /tor in bot @AkitaUS</p></div>'; });
         }
 
-        function clickProto(id) {
-            if (id === 'mini' || id === 'full') {
-                showSubDetail(id, subData[id] || '');
-                return;
-            }
-            if (DIR_DETAILS[id]) {
-                showDirProto(id);
-                return;
-            }
-            // sub-protocols (vless, vmess, etc.)
-            const url = subData[id] || '';
-            if (url) { copyText(url); showToast('Copied subscription URL'); }
-            else tg.showAlert('Get subscription from bot @AkitaUS');
-        }
+function clickProto(id) {
+    if (DIR_DETAILS[id]) {
+        showDirProto(id);
+        return;
+    }
+    // subscription protocol (vless)
+    const url = subData[id] || '';
+    if (url) { copyText(url); showToast('Copied subscription URL'); }
+    else tg.sendData(JSON.stringify({action:'buy'}));
+}
 
-        function showSubDetail(k, url) {
-            const names = {mini:'Mini',full:'Full',vless:'VLESS',vmess:'VMess',trojan:'Trojan',ss:'ShadowSocks',hysteria2:'Hysteria2'};
-            const body = url ?
-                '<div class="encrypt-card"><div class="title">Subscription URL</div><div class="key" style="font-size:9px;">'+url+'</div></div>'+
-                '<button class="close-btn" onclick="copyText(\''+url+'\')">Copy URL</button>'+
-                '<button class="close-btn" style="margin-top:4px;" onclick="tg.openLink(\''+url+'\')">Open</button>'+
-                '<p style="font-size:9px;color:var(--text2);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
-                : '<p>Buy from bot @AkitaUS</p>';
-            openModal((names[k]||k)+' Subscription', body);
-        }
+function showSubDetail(k, url) {
+    const names = {vless:'VLESS'};
+    const body = url ?
+        '<div class="encrypt-card"><div class="title">Subscription URL</div><div class="key" style="font-size:9px;">'+url+'</div></div>'+
+        '<button class="close-btn" onclick="copyText(\''+url+'\')">Copy URL</button>'+
+        '<button class="close-btn" style="margin-top:4px;" onclick="tg.openLink(\''+url+'\')">Open</button>'+
+        '<p style="font-size:9px;color:var(--text2);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
+        : '<p>No active subscription</p><button class="close-btn" onclick="tg.sendData(JSON.stringify({action:\'buy\'}))">Buy via Bot</button>';
+    openModal((names[k]||k)+' Subscription', body);
+}
 
         function showDirProto(id) {
             const servers = DIR_DETAILS[id];
@@ -754,22 +843,29 @@
             openModal(n, html);
         }
 
-        function showServer(id, idx) {
-            const s = DIR_DETAILS[id][idx];
-            if (!s) return;
-            let html = '<div class="encrypt-card"><div class="title">'+(s.c||'')+'</div>';
-            if (s.h) html += '<div class="key">Server: '+s.h+'</div>';
-            if (s.u) html += '<div class="key">User: '+s.u+'</div>';
-            if (s.p) html += '<div class="key">Pass: '+s.p+'</div>';
-            if (s.s) html += '<div class="key">Secret: '+s.s+'</div>';
-            if (s.tc) html += '<div class="key">TCP: '+s.tc+'</div>';
-            if (s.ud) html += '<div class="key">UDP: '+s.ud+'</div>';
-            if (s.f) { const fu = BASE+s.f; html += '<div class="key">Config: '+s.f+'</div><button class="close-btn" onclick="window.open(\''+fu+'\',\'_blank\')">Download</button>'; }
-            if (s.n) html += '<div class="key" style="color:var(--text2);margin-top:4px;">'+s.n+'</div>';
-            html += '</div>';
-            if (s.h) html += '<button class="close-btn" onclick="copyText(\''+s.h+'\')">Copy server</button>';
-            openModal(({sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP',ssl:'SSL',splitnet:'SplitNet',awg:'AWG',wireguard:'WireGuard'}[id]||id)+(s.c?' - '+s.c:''), html);
-        }
+function showServer(id, idx) {
+    const s = DIR_DETAILS[id][idx];
+    if (!s) return;
+    let html = '<div class="encrypt-card"><div class="title">'+(s.c||'')+'</div>';
+    if (s.h) html += '<div class="key">Server: '+s.h+'</div>';
+    if (s.u) html += '<div class="key">User: '+s.u+'</div>';
+    if (s.p) html += '<div class="key">Pass: '+s.p+'</div>';
+    if (s.s) html += '<div class="key">Secret: '+s.s+'</div>';
+    if (s.tc) html += '<div class="key">TCP: '+s.tc+'</div>';
+    if (s.ud) html += '<div class="key">UDP: '+s.ud+'</div>';
+    if (s.f) {
+        const fu = BASE+s.f;
+        html += '<div class="key">Config: '+s.f+'</div>'+
+            '<div style="display:flex;gap:6px;margin-top:6px;">'+
+            '<button class="close-btn" style="flex:1;" onclick="window.open(\''+fu+'\',\'_blank\')">Download</button>'+
+            '<button class="close-btn" style="flex:1;" onclick="tg.sendData(JSON.stringify({action:\'download_file\',file:\''+s.f+'\'}))">Send via Bot</button>'+
+            '</div>';
+    }
+    if (s.n) html += '<div class="key" style="color:var(--text2);margin-top:4px;">'+s.n+'</div>';
+    html += '</div>';
+    if (s.h) html += '<button class="close-btn" onclick="copyText(\''+s.h+'\')">Copy server</button>';
+    openModal(({sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP',ssl:'SSL',splitnet:'SplitNet',awg:'AWG',wireguard:'WireGuard'}[id]||id)+(s.c?' - '+s.c:''), html);
+}
 
         // ---- PROFILE (with analytics, donations, top user) ----
         let trafficHistory = [12,15,23,28,34,41,47,52,58,64,71,78].map(v => v + Math.random()*5);
@@ -788,28 +884,29 @@
             const prev = trafficHistory[0];
             const growth = ((last - prev) / prev * 100).toFixed(0);
             const peak = trafficHistory.reduce((a,b)=>Math.max(a,b), 0);
+            const subStatus = subData.vless ? '\u2705 Active' : '\u274C No sub';
 
             content.innerHTML =
                 `<div class="reveal-up">
-                    <div class="profile-header">
+                    <div class="glass-card" style="padding:16px;display:flex;align-items:center;gap:12px;">
                         <div class="profile-avatar">${av}</div>
-                        <div class="profile-info">
-                            <h2>${fn||'Anonymous'}</h2>
-                            <div class="uid">${un?'@'+un:'ID: '+uid}</div>
-                            <div style="display:flex;gap:4px;margin-top:4px;">
-                                <span class="tag">\uD83D\uDCB0 $${userBalance.toFixed(2)}</span>
-                                <span class="tag">\uD83D\uDEE1\uFE0F Active</span>
+                        <div style="flex:1;">
+                            <h2 style="font-size:16px;font-weight:600;">${fn||'Anonymous'}</h2>
+                            <div style="font-size:11px;color:var(--text2);">${un?'@'+un:'ID: '+uid}</div>
+                            <div style="display:flex;gap:6px;margin-top:4px;">
+                                <span class="tag" style="background:rgba(74,222,128,0.15);color:var(--green);">\uD83D\uDCB0 $${userBalance.toFixed(2)}</span>
+                                <span class="tag" style="background:rgba(251,146,60,0.15);color:var(--orange);">${subStatus}</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="reveal-up" style="animation-delay:0.05s;">
-                    <div class="about-card">
-                        <div class="a-label">Traffic analytics (30 days)</div>
-                        <div style="display:flex;align-items:end;gap:2px;height:40px;margin-top:6px;padding:0 2px;">
+                <div class="reveal-up" style="animation-delay:0.08s;">
+                    <div class="glass-card">
+                        <div class="a-label" style="font-size:10px;color:var(--text2);margin-bottom:6px;">Traffic (30d)</div>
+                        <div style="display:flex;align-items:end;gap:2px;height:36px;">
                             ${trafficHistory.map((v,i) => {
                                 const h = (v/peak*100).toFixed(0);
-                                return `<div style="flex:1;background:var(--card2);border-radius:2px 2px 0 0;height:${h}%;min-height:4px;transition:height 0.5s;"></div>`;
+                                return `<div style="flex:1;background:linear-gradient(to top,rgba(74,222,128,0.3),rgba(74,222,128,0.1));border-radius:2px 2px 0 0;height:${h}%;min-height:3px;transition:height 0.5s;"></div>`;
                             }).join('')}
                         </div>
                         <div style="display:flex;justify-content:space-between;margin-top:4px;">
@@ -819,47 +916,30 @@
                         </div>
                     </div>
                 </div>
-                <div class="reveal-up" style="animation-delay:0.1s;">
-                    <div class="stat-grid">
-                        <div class="stat-card">
-                            <div class="stat-label">Traffic Used</div>
-                            <div class="stat-value">${last.toFixed(1)}</div>
-                            <div class="stat-sub">of 10,240 GB</div>
-                            <div class="traffic-bar"><div class="fill" style="width:${(last/10240*100).toFixed(2)}%"></div></div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-label">Top VPN User</div>
-                            <div class="stat-value" style="font-size:14px;">\uD83C\uDFC6 ${un||'@AkitaUS'}</div>
-                            <div class="stat-sub">${last.toFixed(0)} GB used</div>
+                <div class="reveal-up" style="animation-delay:0.12s;">
+                    <div class="glass-card">
+                        <div style="display:flex;align-items:center;justify-content:space-between;">
+                            <div><span style="font-size:10px;color:var(--text2);">Subscriptions</span>
+                            <div style="font-size:13px;font-weight:500;margin-top:2px;">${subData.vless?'\u2705 Active':'\u274C No subscription'}</div></div>
+                            <div style="display:flex;gap:6px;">
+                                ${subData.vless ? `<button onclick="showSubDetail('vless', subData.vless)" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:var(--text);font-size:11px;cursor:pointer;">Connect</button>` : `<button onclick="tg.sendData(JSON.stringify({action:'buy'}))" style="padding:6px 12px;border-radius:8px;border:1px solid rgba(74,222,128,0.3);background:rgba(74,222,128,0.1);color:var(--green);font-size:11px;cursor:pointer;">Buy</button>`}
+                            </div>
                         </div>
                     </div>
                 </div>
-                <div class="reveal-up" style="animation-delay:0.15s;">
-                    <div class="balance-row" style="margin-bottom:0;">
-                        <div><div class="label">Subscriptions</div>
-                            <div class="amount" style="font-size:14px;">${subData.mini?'\u2705 Mini Ready':'\u274C Mini'}</div>
+                <div class="reveal-up" style="animation-delay:0.16s;">
+                    <div style="display:flex;gap:8px;">
+                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="showTopUp()">
+                            <div style="font-size:18px;margin-bottom:4px;">\uD83D\uDCB0</div>
+                            <div style="font-size:10px;color:var(--text2);">Top Up</div>
                         </div>
-                        <div class="actions">
-                            <button onclick="showSubDetail('mini', subData.mini)">Mini</button>
-                            <button onclick="showSubDetail('full', subData.full)">Full</button>
+                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="doDonate()">
+                            <div style="font-size:18px;margin-bottom:4px;">\u2764\uFE0F</div>
+                            <div style="font-size:10px;color:var(--text2);">Donate</div>
                         </div>
-                    </div>
-                </div>
-                <div class="reveal-up" style="animation-delay:0.2s;">
-                    <div class="balance-row" style="margin-bottom:0;">
-                        <div><div class="label">Support</div></div>
-                        <div class="actions">
-                            <button onclick="doDonate()">\uD83D\uDCB0 Donate</button>
-                            <button onclick="tg.openTelegramLink('https://t.me/AkitaUS')">\uD83D\uDCAC Chat</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="reveal-up" style="animation-delay:0.25s;">
-                    <div class="about-card" style="margin-top:4px;">
-                        <div class="a-label">Connected via</div>
-                        <div style="display:flex;align-items:center;gap:6px;margin-top:4px;">
-                            <span style="font-size:16px;">\uD83E\uDD16</span>
-                            <span style="font-size:11px;color:var(--text2);">Telegram Mini App + @AkitaUS bot</span>
+                        <div class="glass-card" style="flex:1;text-align:center;padding:12px;" onclick="tg.openTelegramLink('https://t.me/AkitaUS')">
+                            <div style="font-size:18px;margin-bottom:4px;">\uD83D\uDCAC</div>
+                            <div style="font-size:10px;color:var(--text2);">Chat</div>
                         </div>
                     </div>
                 </div>`;
