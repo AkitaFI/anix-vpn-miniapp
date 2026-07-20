@@ -728,7 +728,13 @@
             subData = {};
             ['mini','full','vless','vmess','trojan','ss','hysteria2'].forEach(k => { subData[k] = p.get(k) || ''; });
             window.adminStats = { users: p.get('users'), subs: p.get('subs'), balance: p.get('balance') };
-            window.apiUrl = p.get('api_url') || '';
+            const urlParam = p.get('api_url');
+            if (urlParam) {
+                window.apiUrl = urlParam;
+                localStorage.setItem('anix_api_url', urlParam);
+            } else {
+                window.apiUrl = localStorage.getItem('anix_api_url') || '';
+            }
         }
 
         async function fetchUserData(userId) {
