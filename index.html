@@ -655,8 +655,10 @@
         const BASE = 'https://raw.githubusercontent.com/AkitaFI/anix-vpn-miniapp/main/configs/';
         const ALL_PROTO = [
             { id:'vless', name:'VLESS', emoji:'\uD83D\uDD17', sub:true },
-            { id:'hysteria2', name:'Hysteria2', emoji:'\u26A1', sub:false },
-            { id:'ss', name:'ShadowSocks', emoji:'\uD83D\uDD12', sub:false },
+            { id:'vmess', name:'VMess', emoji:'\uD83D\uDD17', sub:true },
+            { id:'ss', name:'ShadowSocks', emoji:'\uD83D\uDD12', sub:true },
+            { id:'trojan', name:'Trojan', emoji:'\uD83D\uDD17', sub:true },
+            { id:'hysteria2', name:'Hysteria2', emoji:'\u26A1', sub:true },
             { id:'sstp', name:'SSTP', emoji:'\uD83D\uDD10', sub:false },
             { id:'openvpn', name:'OpenVPN', emoji:'\uD83D\uDD11', sub:false },
             { id:'l2tp', name:'L2TP', emoji:'\uD83D\uDD12', sub:false },
@@ -741,9 +743,24 @@
                 if (!r.ok) return;
                 const d = await r.json();
                 if (d.balance !== undefined) userBalance = parseFloat(d.balance) || 0;
-                if (d.sub_urls) {
-                    Object.keys(d.sub_urls).forEach(k => {
-                        if (d.sub_urls[k]) subData[k] = d.sub_urls[k];
+                
+                // Clear old subData to prevent layout/state leaks
+                ['mini','full','vless','vmess','trojan','ss','hysteria2'].forEach(k => { subData[k] = ''; });
+
+                if (d.subscriptions) {
+                    Object.keys(d.subscriptions).forEach(k => {
+                        const sub = d.subscriptions[k];
+                        if (sub && sub.url) {
+                            if (k === 'mini') {
+                                subData['mini'] = sub.url;
+                            } else if (k === 'full') {
+                                const proto = sub.protocol || 'vless';
+                                subData[proto] = sub.url;
+                                subData['full'] = sub.url;
+                            } else {
+                                subData[k] = sub.url;
+                            }
+                        }
                     });
                 }
             } catch(e) {}
@@ -814,18 +831,23 @@
         function renderHome() { showHomeSection('vpn'); }
 
         function renderVPNSection(c) {
-            const subIds = ['vless'];
-            const dirIds = ['hysteria2','ss','sstp','openvpn','l2tp','ssl','splitnet','awg','wireguard'];
-            const names = {vless:'VLESS',
-                hysteria2:'Hysteria2',ss:'ShadowSocks',sstp:'SSTP',openvpn:'OpenVPN',l2tp:'L2TP',ssl:'SSL VPN',splitnet:'SplitNet',awg:'AmneziaWG',wireguard:'WireGuard'};
-            const emojis = {vless:'🔗',hysteria2:'⚡',ss:'🔒',sstp:'🔐',openvpn:'🔑',l2tp:'🔒',ssl:'🔏',splitnet:'🌐',awg:'🛡️',wireguard:'🔵'};
+            const subIds = ['vless', 'vmess', 'ss', 'trojan', 'hysteria2'];
+            const dirIds = ['sstp','openvpn','l2tp','ssl','splitnet','awg','wireguard'];
+            const names = {
+                vless: 'VLESS', vmess: 'VMess', ss: 'ShadowSocks', trojan: 'Trojan', hysteria2: 'Hysteria2',
+                sstp: 'SSTP', openvpn: 'OpenVPN', l2tp: 'L2TP', ssl: 'SSL VPN', splitnet: 'SplitNet', awg: 'AmneziaWG', wireguard: 'WireGuard'
+            };
+            const emojis = {
+                vless: '🔗', vmess: '🔗', ss: '🔒', trojan: '🔗', hysteria2: '⚡',
+                sstp: '🔐', openvpn: '🔑', l2tp: '🔒', ssl: '🔏', splitnet: '🌐', awg: '🛡️', wireguard: '🔵'
+            };
             let html = '<div class="reveal-up">';
             html += '<p class="stat-label" style="margin-bottom:var(--space-2);">Subscriptions</p><div class="proto-grid">';
             subIds.forEach(id => {
                 const url = subData[id] || '';
-                html += `<div class="proto-tile" onclick="${url ? `showSubDetail('${id}','${url.replace(/'/g,"\\'")}')` : `tg.sendData(JSON.stringify({action:'buy'}))`}"><span class="emoji">${emojis[id]}</span><span class="name">${names[id]}</span></div>`;
+                html += `<div class="proto-tile${url ? ' selected' : ''}" onclick="${url ? `showSubDetail('${id}','${url.replace(/'/g,"\\'")}')` : `tg.sendData(JSON.stringify({action:'buy'}))`}"><span class="emoji">${emojis[id]}</span><span class="name">${names[id]}</span><span class="desc" style="display:block;font-size:7px;margin-top:2px;color:${url ? 'var(--green)' : 'var(--tg-hint)'};">${url ? 'Active' : 'Buy'}</span></div>`;
             });
-            html += '</div><p class="stat-label" style="margin-bottom:var(--space-2);">Direct</p><div class="proto-grid">';
+            html += '</div><p class="stat-label" style="margin-bottom:var(--space-2);">Direct (Free/Manual)</p><div class="proto-grid">';
             dirIds.forEach(id => {
                 html += `<div class="proto-tile" onclick="showDirProto('${id}')"><span class="emoji">${emojis[id]}</span><span class="name">${names[id]}</span></div>`;
             });
@@ -874,17 +896,31 @@
 
         function renderTorSection(c) {
             c.innerHTML = '<div class="reveal-up"><p class="stat-label" style="margin-bottom:var(--space-2);">TOR Bridges</p><div style="padding:20px;text-align:center;"><div class="spinner" style="margin:0 auto;"></div></div></div>';
-            fetch('https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt', {mode:'cors'})
-                .then(r => r.ok ? r.text() : Promise.reject())
-                .then(text => {
-                    const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0,20);
-                    const html = lines.map(l =>
-                        `<div class="sub-card" style="padding:8px 12px;" onclick="copyText('${l.trim()}')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:9px;word-break:break-all;">${l.trim()}</div></div></div>`
-                    ).join('');
-                    c.innerHTML = `<div class="reveal-up"><p class="stat-label" style="margin-bottom:var(--space-2);">TOR Bridges</p>${html}</div>`;
-                })
+            
+            const renderBridges = (text) => {
+                const lines = text.split('\n').filter(l => l.trim() && !l.startsWith('#')).slice(0,20);
+                const html = lines.map(l =>
+                    `<div class="sub-card" style="padding:8px 12px;" onclick="copyText('${l.trim()}')"><div class="sub-body"><div class="info" style="font-family:monospace;font-size:9px;word-break:break-all;">${l.trim()}</div></div></div>`
+                ).join('');
+                c.innerHTML = `<div class="reveal-up"><p class="stat-label" style="margin-bottom:var(--space-2);">TOR Bridges</p>${html}</div>`;
+            };
+
+            const localUrl = window.apiUrl ? window.apiUrl + '/api/tor-bridges' : '';
+            const gitUrl = 'https://raw.githubusercontent.com/igareck/vpn-configs-for-russia/refs/heads/main/TOR-BRIDGES/TOR_BRIDGES_ALL.txt';
+            
+            const tryFetch = (url) => {
+                if (!url) return Promise.reject();
+                return fetch(url, {mode:'cors'}).then(r => r.ok ? r.text() : Promise.reject());
+            };
+
+            tryFetch(localUrl)
+                .then(renderBridges)
                 .catch(() => {
-                    c.innerHTML = '<div class="reveal-up"><p class="stat-label" style="margin-bottom:var(--space-2);">TOR Bridges</p><p style="color:var(--tg-hint);font-size:11px;">Use /tor in bot @AkitaUS</p></div>';
+                    tryFetch(gitUrl)
+                        .then(renderBridges)
+                        .catch(() => {
+                            c.innerHTML = '<div class="reveal-up"><p class="stat-label" style="margin-bottom:var(--space-2);">TOR Bridges</p><p style="color:var(--tg-hint);font-size:11px;">Use /tor in bot @AkitaUS</p></div>';
+                        });
                 });
         }
 
@@ -896,14 +932,15 @@
         }
 
         function showSubDetail(k, url) {
-            const names = {vless:'VLESS'};
+            const names = {vless:'VLESS', vmess:'VMess', ss:'ShadowSocks', trojan:'Trojan', hysteria2:'Hysteria2'};
+            const name = names[k] || k;
             const body = url ?
                 '<div class="encrypt-card"><div class="title">Subscription URL</div><div class="key" style="font-size:9px;">'+url+'</div></div>'+
                 '<button class="btn-copy" onclick="copyText(\''+url+'\')" style="width:100%;">Copy URL</button>'+
                 '<button class="btn-copy" onclick="tg.openLink(\''+url+'\')" style="width:100%;">Open</button>'+
                 '<p style="font-size:9px;color:var(--tg-hint);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
                 : '<p>No active subscription</p><button class="btn-primary" onclick="tg.sendData(JSON.stringify({action:\'buy\'}))">Buy via Bot</button>';
-            openModal((names[k]||k)+' Subscription', body);
+            openModal(name + ' Subscription', body);
         }
 
         function showDirProto(id) {
