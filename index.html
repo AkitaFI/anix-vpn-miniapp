@@ -9,30 +9,30 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root {
-            --tg-bg: #030712;
+            --tg-bg: #000000;
             --tg-text: #f3f4f6;
-            --tg-hint: #9ca3af;
-            --tg-accent: #06b6d4;
-            --tg-secondary-bg: #0b0f19;
-            --tg-section-bg: #111827;
-            --tg-destructive: #ef4444;
-            --glass-tint: rgba(15, 23, 42, 0.45);
-            --glass-border: rgba(6, 182, 212, 0.15);
-            --glass-border-strong: rgba(6, 182, 212, 0.30);
-            --glass-rim: rgba(255, 255, 255, 0.03);
-            --glass-rim-top: rgba(6, 182, 212, 0.20);
+            --tg-hint: #8e8e93;
+            --tg-accent: #ffffff;
+            --tg-secondary-bg: #0c0c0e;
+            --tg-section-bg: #18181c;
+            --tg-destructive: #ff453a;
+            --glass-tint: rgba(24, 24, 28, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-strong: rgba(255, 255, 255, 0.15);
+            --glass-rim: rgba(255, 255, 255, 0.02);
+            --glass-rim-top: rgba(255, 255, 255, 0.12);
             --space-1: 4px; --space-2: 8px; --space-3: 12px;
             --space-4: 16px; --space-5: 20px; --space-6: 24px;
             --space-8: 32px; --space-10: 40px; --space-12: 48px;
             --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 22px;
             --safe-t: env(safe-area-inset-top, 0px);
             --safe-b: env(safe-area-inset-bottom, 0px);
-            --green: #22c55e;
-            --orange: #f97316;
-            --red: #ef4444;
-            --blue: #3b82f6;
-            --purple: #8b5cf6;
-            --yellow: #eab308;
+            --green: #a3a3a3;
+            --orange: #737373;
+            --red: #ff453a;
+            --blue: #a3a3a3;
+            --purple: #d4d4d4;
+            --yellow: #e5e5e5;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -931,12 +931,13 @@
         function showSubDetail(k, url) {
             const names = {vless:'VLESS', vmess:'VMess', ss:'ShadowSocks', trojan:'Trojan', hysteria2:'Hysteria2'};
             const name = names[k] || k;
+            const filename = url ? url.substring(url.lastIndexOf('/') + 1) : '';
             const body = url ?
                 '<div class="encrypt-card"><div class="title">Subscription URL</div><div class="key" style="font-size:9px;">'+url+'</div></div>'+
                 '<button class="btn-copy" onclick="copyText(\''+url+'\')" style="width:100%;">Copy URL</button>'+
-                '<button class="btn-copy" onclick="tg.openLink(\''+url+'\')" style="width:100%;">Open</button>'+
+                '<button class="btn-copy" onclick="sendFileViaBot(\''+filename+'\')" style="width:100%;">Send via Bot</button>'+
                 '<p style="font-size:9px;color:var(--tg-hint);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
-                : '<p>Подписка не найдена</p><button class="btn-primary" onclick="tg.showAlert(\'Напишите /start в боте для автоматической активации всех подписок.\')">Активировать</button>';
+                : '<p>Подписка не активна</p><button class="btn-primary" onclick="activateSubscription(\''+k+'\')">Получить подписку</button>';
             openModal(name + ' Subscription', body);
         }
 
@@ -1162,36 +1163,36 @@
             const p = new URLSearchParams(window.location.search);
             const users = p.get('users')||'0', subs = p.get('subs')||'0', bali = p.get('balance')||'0';
             const adminActions = [
-                {icon:'\uD83D\uDCE2', label:'Broadcast', action:"tg.sendData(JSON.stringify({action:'broadcast'}))"},
-                {icon:'\uD83D\uDCCB', label:'Users List', action:"tg.sendData(JSON.stringify({action:'admin_users'}))"},
-                {icon:'\uD83D\uDCB8', label:'Finance', action:"tg.sendData(JSON.stringify({action:'admin_finance'}))"},
-                {icon:'\uD83D\uDEE1\uFE0F', label:'Block User', action:"tg.sendData(JSON.stringify({action:'admin_block'}))"},
-                {icon:'\u2705', label:'Unblock', action:"tg.sendData(JSON.stringify({action:'admin_unblock'}))"},
-                {icon:'\uD83D\uDD11', label:'Reset Pass', action:"tg.sendData(JSON.stringify({action:'admin_reset'}))"},
-                {icon:'\uD83D\uDCC8', label:'Analytics', action:"tg.sendData(JSON.stringify({action:'admin_stats'}))"},
-                {icon:'\uD83D\uDD10', label:'Toggle Bot', action:"tg.sendData(JSON.stringify({action:'admin_toggle'}))"},
-                {icon:'\uD83E\uDD16', label:'AI Config', action:"tg.sendData(JSON.stringify({action:'admin_ai_config'}))"},
-                {icon:'\uD83D\uDCF4', label:'Broadcast Mini', action:"tg.sendData(JSON.stringify({action:'admin_mini_bc'}))"},
-                {icon:'\uD83D\uDCA1', label:'System Info', action:"tg.sendData(JSON.stringify({action:'admin_sysinfo'}))"},
-                {icon:'\uD83D\uDEE0\uFE0F', label:'Maintenance', action:"tg.sendData(JSON.stringify({action:'admin_maintenance'}))"},
-                {icon:'\uD83D\uDD12', label:'Set API Key', action:"tg.sendData(JSON.stringify({action:'admin_set_key'}))"},
-                {icon:'\uD83D\uDD13', label:'Proxy Update', action:"tg.sendData(JSON.stringify({action:'admin_proxy_update'}))"},
-                {icon:'\uD83D\uDEE1\uFE0F', label:'TOR Refresh', action:"tg.sendData(JSON.stringify({action:'admin_tor_refresh'}))"},
-                {icon:'\uD83D\uDCC4', label:'Logs', action:"tg.sendData(JSON.stringify({action:'admin_logs'}))"},
-                {icon:'\uD83D\uDCDD', label:'Export DB', action:"tg.sendData(JSON.stringify({action:'admin_export'}))"},
-                {icon:'\uD83D\uDD04', label:'Restart', action:"tg.sendData(JSON.stringify({action:'admin_restart'}))"},
-                {icon:'\uD83D\uDC64', label:'Make Admin', action:"tg.sendData(JSON.stringify({action:'admin_add_admin'}))"},
-                {icon:'\uD83D\uDD34', label:'Remove Admin', action:"tg.sendData(JSON.stringify({action:'admin_remove_admin'}))"},
-                {icon:'\uD83D\uDCF6', label:'Notification', action:"tg.sendData(JSON.stringify({action:'admin_notification'}))"},
-                {icon:'\uD83D\uDCF1', label:'App Version', action:"tg.sendData(JSON.stringify({action:'admin_version'}))"},
-                {icon:'\uD83D\uDD25', label:'Kill Server', action:"tg.sendData(JSON.stringify({action:'admin_kill'}))"},
-                {icon:'\uD83D\uDD0D', label:'Health Check', action:"tg.sendData(JSON.stringify({action:'admin_health'}))"},
-                {icon:'\uD83D\uDCC1', label:'Backup', action:"tg.sendData(JSON.stringify({action:'admin_backup'}))"},
-                {icon:'\uD83C\uDFD7\uFE0F', label:'Storage', action:"tg.sendData(JSON.stringify({action:'admin_storage'}))"},
-                {icon:'\uD83D\uDD0C', label:'Status', action:"tg.sendData(JSON.stringify({action:'admin_status'}))"},
-                {icon:'\uD83D\uDD2E', label:'Error Log', action:"tg.sendData(JSON.stringify({action:'admin_errors'}))"},
-                {icon:'\uD83D\uDCA0', label:'Ping Test', action:"tg.sendData(JSON.stringify({action:'admin_ping'}))"},
-                {icon:'\uD83D\uDD30', label:'Config Push', action:"tg.sendData(JSON.stringify({action:'admin_config_push'}))"},
+                {icon:'\uD83D\uDCE2', label:'Broadcast', action:"triggerAdminAction('broadcast')"},
+                {icon:'\uD83D\uDCCB', label:'Users List', action:"triggerAdminAction('admin_users')"},
+                {icon:'\uD83D\uDCB8', label:'Finance', action:"triggerAdminAction('admin_finance')"},
+                {icon:'\uD83D\uDEE1\uFE0F', label:'Block User', action:"triggerAdminAction('admin_block')"},
+                {icon:'\u2705', label:'Unblock', action:"triggerAdminAction('admin_unblock')"},
+                {icon:'\uD83D\uDD11', label:'Reset Pass', action:"triggerAdminAction('admin_reset')"},
+                {icon:'\uD83D\uDCC8', label:'Analytics', action:"triggerAdminAction('admin_stats')"},
+                {icon:'\uD83D\uDD10', label:'Toggle Bot', action:"triggerAdminAction('admin_toggle')"},
+                {icon:'\uD83E\uDD16', label:'AI Config', action:"triggerAdminAction('admin_ai_config')"},
+                {icon:'\uD83D\uDCF4', label:'Broadcast Mini', action:"triggerAdminAction('admin_mini_bc')"},
+                {icon:'\uD83D\uDCA1', label:'System Info', action:"triggerAdminAction('admin_sysinfo')"},
+                {icon:'\uD83D\uDEE0\uFE0F', label:'Maintenance', action:"triggerAdminAction('admin_maintenance')"},
+                {icon:'\uD83D\uDD12', label:'Set API Key', action:"triggerAdminAction('admin_set_key')"},
+                {icon:'\uD83D\uDD13', label:'Proxy Update', action:"triggerAdminAction('admin_proxy_update')"},
+                {icon:'\uD83D\uDEE1\uFE0F', label:'TOR Refresh', action:"triggerAdminAction('admin_tor_refresh')"},
+                {icon:'\uD83D\uDCC4', label:'Logs', action:"triggerAdminAction('admin_logs')"},
+                {icon:'\uD83D\uDCDD', label:'Export DB', action:"triggerAdminAction('admin_export')"},
+                {icon:'\uD83D\uDD04', label:'Restart', action:"triggerAdminAction('admin_restart')"},
+                {icon:'\uD83D\uDC64', label:'Make Admin', action:"triggerAdminAction('admin_add_admin')"},
+                {icon:'\uD83D\uDD34', label:'Remove Admin', action:"triggerAdminAction('admin_remove_admin')"},
+                {icon:'\uD83D\uDCF6', label:'Notification', action:"triggerAdminAction('admin_notification')"},
+                {icon:'\uD83D\uDCF1', label:'App Version', action:"triggerAdminAction('admin_version')"},
+                {icon:'\uD83D\uDD25', label:'Kill Server', action:"triggerAdminAction('admin_kill')"},
+                {icon:'\uD83D\uDD0D', label:'Health Check', action:"triggerAdminAction('admin_health')"},
+                {icon:'\uD83D\uDCC1', label:'Backup', action:"triggerAdminAction('admin_backup')"},
+                {icon:'\uD83C\uDFD7\uFE0F', label:'Storage', action:"triggerAdminAction('admin_storage')"},
+                {icon:'\uD83D\uDD0C', label:'Status', action:"triggerAdminAction('admin_status')"},
+                {icon:'\uD83D\uDD2E', label:'Error Log', action:"triggerAdminAction('admin_errors')"},
+                {icon:'\uD83D\uDCA0', label:'Ping Test', action:"triggerAdminAction('admin_ping')"},
+                {icon:'\uD83D\uDD30', label:'Config Push', action:"triggerAdminAction('admin_config_push')"},
             ];
             c.innerHTML =
                 '<div class="reveal-up"><div class="stat-grid stat-grid-3">'+
@@ -1264,6 +1265,74 @@
             })
             .catch(e => {
                 showToast('❌ Connection error');
+            });
+        }
+        function activateSubscription(proto) {
+            try {
+                tg.HapticFeedback.impactOccurred('medium');
+            } catch(e) {}
+            showToast('Активация...');
+            fetch((window.apiUrl || '') + '/api/activate-subscription', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: userData ? userData.id : 0, protocol: proto})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success && data.url) {
+                    showToast('✓ Активировано!');
+                    subData[proto] = data.url;
+                    closeModal();
+                    const uid = userData ? userData.id : 0;
+                    if (uid) {
+                        fetchUserData(uid).then(() => {
+                            showSubDetail(proto, data.url);
+                        });
+                    }
+                } else {
+                    showToast('❌ Ошибка: ' + (data.error || 'Не удалось активировать'));
+                }
+            })
+            .catch(() => showToast('❌ Ошибка подключения'));
+        }
+        function triggerAdminAction(actionName) {
+            let param = null;
+            const promptActions = {
+                'broadcast': 'Введите сообщение для рассылки:',
+                'admin_block': 'Введите ID пользователя для блокировки:',
+                'admin_unblock': 'Введите ID пользователя для разблокировки:',
+                'admin_set_key': 'Введите новый API ключ:',
+                'admin_add_admin': 'Введите ID нового администратора:',
+                'admin_remove_admin': 'Введите ID администратора для удаления:',
+                'admin_notification': 'Введите ID пользователя и текст (через двоеточие):'
+            };
+            if (promptActions[actionName]) {
+                param = prompt(promptActions[actionName]);
+                if (param === null || param.trim() === '') return;
+            }
+            showToast('Выполняется...');
+            fetch((window.apiUrl || '') + '/api/admin-action', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    user_id: userData ? userData.id : 0,
+                    action: actionName,
+                    param: param
+                })
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✓ Выполнено!');
+                    if (data.message) {
+                        tg.showAlert(data.message);
+                    }
+                } else {
+                    showToast('❌ Ошибка: ' + (data.error || 'Не удалось выполнить'));
+                }
+            })
+            .catch(e => {
+                showToast('❌ Ошибка сети');
             });
         }
         document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
