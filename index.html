@@ -9,30 +9,30 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root {
-            --tg-bg: #000000;
-            --tg-text: #e5e5e5;
-            --tg-hint: #737373;
-            --tg-accent: #4ade80;
-            --tg-secondary-bg: #0f0f0f;
-            --tg-section-bg: #111111;
-            --tg-destructive: #f87171;
-            --glass-tint: rgba(28,28,32,0.28);
-            --glass-border: rgba(255,255,255,0.06);
-            --glass-border-strong: rgba(255,255,255,0.10);
-            --glass-rim: rgba(255,255,255,0.06);
-            --glass-rim-top: rgba(255,255,255,0.10);
+            --tg-bg: #030712;
+            --tg-text: #f3f4f6;
+            --tg-hint: #9ca3af;
+            --tg-accent: #06b6d4;
+            --tg-secondary-bg: #0b0f19;
+            --tg-section-bg: #111827;
+            --tg-destructive: #ef4444;
+            --glass-tint: rgba(15, 23, 42, 0.45);
+            --glass-border: rgba(6, 182, 212, 0.15);
+            --glass-border-strong: rgba(6, 182, 212, 0.30);
+            --glass-rim: rgba(255, 255, 255, 0.03);
+            --glass-rim-top: rgba(6, 182, 212, 0.20);
             --space-1: 4px; --space-2: 8px; --space-3: 12px;
             --space-4: 16px; --space-5: 20px; --space-6: 24px;
             --space-8: 32px; --space-10: 40px; --space-12: 48px;
             --radius-sm: 8px; --radius-md: 12px; --radius-lg: 16px; --radius-xl: 22px;
             --safe-t: env(safe-area-inset-top, 0px);
             --safe-b: env(safe-area-inset-bottom, 0px);
-            --green: #4ade80;
-            --orange: #fb923c;
-            --red: #f87171;
-            --blue: #60a5fa;
-            --purple: #a78bfa;
-            --yellow: #fbbf24;
+            --green: #22c55e;
+            --orange: #f97316;
+            --red: #ef4444;
+            --blue: #3b82f6;
+            --purple: #8b5cf6;
+            --yellow: #eab308;
         }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -486,8 +486,6 @@
 <body>
     <!-- Login Screen -->
     <div class="page active" id="page-login" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:0 20px;">
-        <img src="https://raw.githubusercontent.com/AkitaFI/Test-web/refs/heads/main/IMG_20260528_191931_422.jpg"
-             style="width:80px;height:80px;border-radius:22px;object-fit:cover;margin-bottom:24px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
         <h1 style="font-size:24px;font-weight:800;margin-bottom:8px;letter-spacing:-0.5px;">Anix VPN</h1>
         <p style="font-size:13px;color:var(--tg-hint);text-align:center;margin-bottom:36px;line-height:1.5;max-width:260px;">
             Log in with Telegram to access<br>secure VPN and your profile
@@ -507,7 +505,6 @@
     <div id="appContent" style="display:none;">
         <div class="top-bar">
             <div class="top-bar-left">
-                <div class="logo-icon">A</div>
                 <h1>Anix VPN</h1>
             </div>
             <span class="status"><span class="dot"></span>Online</span>
@@ -845,7 +842,7 @@
             html += '<p class="stat-label" style="margin-bottom:var(--space-2);">Subscriptions</p><div class="proto-grid">';
             subIds.forEach(id => {
                 const url = subData[id] || '';
-                html += `<div class="proto-tile${url ? ' selected' : ''}" onclick="${url ? `showSubDetail('${id}','${url.replace(/'/g,"\\'")}')` : `tg.sendData(JSON.stringify({action:'buy'}))`}"><span class="emoji">${emojis[id]}</span><span class="name">${names[id]}</span><span class="desc" style="display:block;font-size:7px;margin-top:2px;color:${url ? 'var(--green)' : 'var(--tg-hint)'};">${url ? 'Active' : 'Buy'}</span></div>`;
+                html += `<div class="proto-tile${url ? ' selected' : ''}" onclick="showSubDetail('${id}', subData['${id}'] || '')"><span class="emoji">${emojis[id]}</span><span class="name">${names[id]}</span><span class="desc" style="display:block;font-size:7px;margin-top:2px;color:${url ? 'var(--green)' : 'var(--tg-hint)'};">${url ? 'Active' : 'Buy'}</span></div>`;
             });
             html += '</div><p class="stat-label" style="margin-bottom:var(--space-2);">Direct (Free/Manual)</p><div class="proto-grid">';
             dirIds.forEach(id => {
@@ -881,7 +878,7 @@
             if (type === 'tg') {
                 tg.openProxy && tg.openProxy('85.23.9.73', 1080, '9d5c1f9476e1dbb7c1c6e0b5c3d4e5f6');
             } else if (type === 'white') {
-                tg.sendData(JSON.stringify({action:'download_file',file:'StarLink.conf'}));
+                sendFileViaBot('StarLink.conf');
             } else if (type === 'socks5') {
                 openModal('Socks5',
                     '<div class="encrypt-card"><div class="title">Socks5 Proxy</div><div class="key">Host: 85.23.9.73</div><div class="key">Port: 1080</div><div class="key">User: proxy</div><div class="key">Pass: proxy123</div></div>'+
@@ -928,7 +925,7 @@
             if (DIR_DETAILS[id]) { showDirProto(id); return; }
             const url = subData[id] || '';
             if (url) { copyText(url); showToast('Copied subscription URL'); }
-            else tg.sendData(JSON.stringify({action:'buy'}));
+            else tg.showAlert('Все подписки активируются автоматически при старте бота! Напишите /start в боте, чтобы активировать.');
         }
 
         function showSubDetail(k, url) {
@@ -939,7 +936,7 @@
                 '<button class="btn-copy" onclick="copyText(\''+url+'\')" style="width:100%;">Copy URL</button>'+
                 '<button class="btn-copy" onclick="tg.openLink(\''+url+'\')" style="width:100%;">Open</button>'+
                 '<p style="font-size:9px;color:var(--tg-hint);margin-top:6px;">Paste in HApp / v2rayNG / Hiddify</p>'
-                : '<p>No active subscription</p><button class="btn-primary" onclick="tg.sendData(JSON.stringify({action:\'buy\'}))">Buy via Bot</button>';
+                : '<p>Подписка не найдена</p><button class="btn-primary" onclick="tg.showAlert(\'Напишите /start в боте для автоматической активации всех подписок.\')">Активировать</button>';
             openModal(name + ' Subscription', body);
         }
 
@@ -978,7 +975,7 @@
                 html += '<div class="key">Config: '+s.f+'</div>'+
                     '<div style="display:flex;gap:6px;margin-top:6px;">'+
                     '<button class="btn-copy" style="flex:1;" onclick="window.open(\''+fu+'\',\'_blank\')">Download</button>'+
-                    '<button class="btn-copy" style="flex:1;" onclick="tg.sendData(JSON.stringify({action:\'download_file\',file:\''+s.f+'\'}))">Send via Bot</button>'+
+                    '<button class="btn-copy" style="flex:1;" onclick="sendFileViaBot(\''+s.f+'\')">Send via Bot</button>'+
                     '</div>';
             }
             if (s.n) html += '<div class="key" style="color:var(--tg-hint);margin-top:4px;">'+s.n+'</div>';
@@ -1083,7 +1080,7 @@
                             <div>
                                 ${subData.vless
                                     ? `<button class="btn-connect" onclick="showSubDetail('vless', subData.vless)">Connect</button>`
-                                    : `<button class="btn-connect" onclick="tg.sendData(JSON.stringify({action:'buy'}))">\uD83D\uDCB0 Buy</button>`}
+                                    : `<button class="btn-connect" onclick="showSubDetail('vless', '')">Activate</button>`}
                             </div>
                         </div>
                     </div>
@@ -1246,6 +1243,28 @@
             t.className = 'toast';
             t.textContent = msg; document.body.appendChild(t);
             setTimeout(()=>t.remove(), 1500);
+        }
+        function sendFileViaBot(filename) {
+            try {
+                tg.HapticFeedback.notificationOccurred('success');
+            } catch(e) {}
+            showToast('Sending via bot...');
+            fetch((window.apiUrl || '') + '/api/send-config', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({user_id: userData ? userData.id : 0, file: filename})
+            })
+            .then(r => r.json())
+            .then(data => {
+                if (data.success) {
+                    showToast('✓ Config sent to Telegram!');
+                } else {
+                    showToast('❌ Error: ' + (data.error || 'Failed to send'));
+                }
+            })
+            .catch(e => {
+                showToast('❌ Connection error');
+            });
         }
         document.getElementById('modalOverlay').addEventListener('click', e => { if(e.target===e.currentTarget) closeModal(); });
         document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
